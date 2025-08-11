@@ -1,0 +1,17 @@
+###=====================================
+### brew list --installed-on-request
+###=====================================
+fastfetch
+fish
+gh
+git
+htop
+mas
+neovim
+node
+peco
+pipx
+pnpm
+tree
+xcodegen
+zig

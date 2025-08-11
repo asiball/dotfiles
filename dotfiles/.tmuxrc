@@ -1,0 +1,155 @@
+# vim:set foldmethod=marker:
+## zi : 折りたたみの有効無効の切り替え
+## za : 折りたたみの開閉
+## zf : 折りたたみの作成(範囲選択の開始行と終了行の末尾にマーカーを追加する){{{
+## zA : 折りたたみの再帰的開閉
+## zd : 折りたたみの削除
+## zR : バッファ内の全ての折りたたみを開く
+## zM : バッファ内の全ての折りたたみを閉じる}}}
+
+
+### -------------
+### 初期設定{{{
+### -------------
+
+# tmux起動時のシェルをzshにする
+# set-option -g default-shell /bin/zsh
+
+# tmuxを256色表示できるようにする
+set-option -g default-terminal screen-256color
+set -g terminal-overrides 'xterm:color=256'
+
+# prefixキーをC-qに変更
+set -g prefix C-s
+# C-bのキーバインドを解除
+unbind C-b
+# ステータスバーをトップに配置する
+set-option -g status-position top
+# デタッチを追加
+# bind-key -n C-d detach
+
+# PROMPTの設定
+#PROMPT="%B%F{green}%n@%m%f%b:%B%F{yellow}%~%b%f %F{default}%# "
+#RPROMPT="%*"
+
+# 左右のステータスバーの長さを決定する
+set-option -g status-left-length 30
+set-option -g status-right-length 90
+
+# #P=> ペイン番号
+# 最左に表示
+set-option -g status-left '#[fg=colour83]#{?client_prefix,#[reverse],}#H#[default]:[Pain#[fg=colour166,bold]#P#[default]]'
+
+# Wi-Fi、バッテリー残量、現在時刻
+# 最右に表示
+set-option -g status-right '#(wifi) #(battery --tmux) [%Y/%m/%d(%a) %H:%M#[default]]'
+
+# window-status のフォーマットを指定する。
+set-window-option -g window-status-format " #I: #W "
+# カレントウィンドウの window-status のフォーマットを指定する
+set-window-option -g window-status-current-format "#[fg=colour255,bg=colour27,bold] #I: #W #[default]"
+
+
+# escの遅延をなくす
+set -s escape-time 0
+# ステータスバーを１秒ごとに描画し直す
+set-option -g status-interval 1
+
+# センタライズ（主にウィンドウ番号など）
+set-option -g status-justify "centre" 
+# ステータスバーの色を設定する
+set-option -g status-bg "colour23"
+# status line の文字色を指定する
+set-option -g status-fg "colour255"
+# ウィンドウのインデックスを1から始める
+set-option -g base-index 1
+# ペインのインデックスを1から始める
+setw -g pane-base-index 1
+
+# 非アクティブなペインのみ白っぽく変更（真っ黒は232）
+#set -g window-style 'bg=colour235'
+#set -g window-active-style 'bg=colour232'
+# ペインボーダーの色を設定する
+set -g pane-border-style fg=green,bg=black
+# アクティブなペインを目立たせる
+set -g pane-active-border-style fg=white,bg=yellow
+
+
+### ~~~~~~~~~~~~
+###    }}}
+
+
+
+### -------------
+### キーバインド {{{
+### -------------
+
+# tmux起動時のシェルをzshにする
+# tmux起動時のシェルをzshにする
+# vimのキーバインドでペインを移動する
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+## ペインの移動をprefixなしで行う（Shift + 矢印キー）
+bind -n S-left select-pane -L
+bind -n S-down select-pane -D
+bind -n S-up select-pane -U
+bind -n S-right select-pane -R
+
+# vimのキーバインドでペインをリサイズする
+bind -r H resize-pane -L 5
+bind -r J resize-pane -D 5
+bind -r K resize-pane -U 5
+bind -r L resize-pane -R 5
+
+# | でペインを縦分割する
+bind | split-window -h
+
+# - でペインを横分割する
+bind - split-window -v
+
+# ペイン終了
+bind k kill-pane
+
+# ウィンドウ終了
+bind K kill-window
+
+### ~~~~~~~~~~~~
+###  }}}
+
+
+### -------------
+### 操作設定{{{
+### -------------
+
+# マウス操作を有効にする
+set-option -g mouse on
+bind -n WheelUpPane if-shell -F -t = "#{mouse_any_flag}" "send-keys -M" "if -Ft= '#{pane_in_mode}' 'send-keys -M' 'copy-mode -e'"
+bind -n WheelDownPane select-pane -t=\; send-keys -M
+
+# 設定ファイルをリロードする
+bind r source-file ~/.tmux.conf \; display "Reloaded!"
+
+## 並列実行のトグル化
+bind e setw synchronize-panes \; display "synchronize-panes #{?pane_synchronized,on,off}"
+
+## --------------
+### コピーモードを設定する
+## --------------
+
+## コピーモードの操作をvi風に設定する
+set-window-option -g mode-keys vi
+
+bind-key -T copy-mode-vi v send-keys -X begin-selection
+bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
+bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "reattach-to-user-namespace pbcopy"
+bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel "reattach-to-user-namespace pbcopy"
+##------------
+# 1.<prefix>+[ でコピーモードに入る
+# 2.'v' で選択を開始
+# 3.'y' もしくはEnterで選択を終了。
+##------------
+
+### ~~~~~~~~~~~~
+###  }}}

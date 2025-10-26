@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+release/
+public/lib/
+*.min.js
+*.bundle.js
+package-lock.json
+*.log
+.DS_Store

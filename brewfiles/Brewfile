@@ -1,11 +1,11 @@
-###=====================================
-### brew list --installed-on-request
-###=====================================
 fastfetch
+fd
 fish
 gh
 git
 htop
+jj
+lazygit
 mas
 neovim
 node
@@ -13,5 +13,3 @@ peco
 pipx
 pnpm
 tree
-xcodegen
-zig

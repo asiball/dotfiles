@@ -1,17 +1,14 @@
-###=====================================
-### brew list --cask -1
-###=====================================
 alfred
 apparency
-appcleaner
+arc
+avast-security
 cleanmymac
 cyberduck
 devtoys
 discord
-docker-desktop
-firefox
 font-hack-nerd-font
-ghostty
+github
+gitkraken
 google-chrome
 istat-menus
 iterm2
@@ -21,4 +18,5 @@ little-snitch
 monitorcontrol
 notion
 popclip
+spotify
 visual-studio-code

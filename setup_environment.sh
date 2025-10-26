@@ -43,7 +43,7 @@ manage_dotfiles() {
             local dotfiles=(
                 ".bashrc"
                 ".gitconfig"
-                ".tmux.conf"
+                ".tmuxrc"
                 ".vimrc"
                 ".zshrc"
             )
@@ -74,6 +74,20 @@ manage_dotfiles() {
                 mkdir -p "dotfiles/.config/nvim"
                 cp -r "$HOME/.config/nvim/"* "dotfiles/.config/nvim/" 2>/dev/null || true
                 echo "  ✅ neovim設定をコピーしました"
+            fi
+            
+            # GitHub CLI設定
+            if [[ -d "$HOME/.config/gh" ]]; then
+                mkdir -p "dotfiles/.config/gh"
+                cp -r "$HOME/.config/gh/"* "dotfiles/.config/gh/" 2>/dev/null || true
+                echo "  ✅ GitHub CLI設定をコピーしました"
+            fi
+            
+            # htop設定
+            if [[ -d "$HOME/.config/htop" ]]; then
+                mkdir -p "dotfiles/.config/htop"
+                cp -r "$HOME/.config/htop/"* "dotfiles/.config/htop/" 2>/dev/null || true
+                echo "  ✅ htop設定をコピーしました"
             fi
             ;;
             
@@ -124,6 +138,28 @@ manage_dotfiles() {
                         [[ -d "$HOME/.config/nvim" ]] && mv "$HOME/.config/nvim" "$HOME/.config/nvim.backup.$(date +%Y%m%d_%H%M%S)"
                         ln -s "$SCRIPT_DIR/dotfiles/.config/nvim" "$HOME/.config/nvim"
                         echo "  ✅ neovim設定をリンクしました"
+                    fi
+                fi
+                
+                # GitHub CLI設定
+                if [[ -d "dotfiles/.config/gh" ]]; then
+                    if [[ -L "$HOME/.config/gh" ]]; then
+                        echo "  ⏭️  GitHub CLI設定 (既にシンボリックリンク)"
+                    else
+                        [[ -d "$HOME/.config/gh" ]] && mv "$HOME/.config/gh" "$HOME/.config/gh.backup.$(date +%Y%m%d_%H%M%S)"
+                        ln -s "$SCRIPT_DIR/dotfiles/.config/gh" "$HOME/.config/gh"
+                        echo "  ✅ GitHub CLI設定をリンクしました"
+                    fi
+                fi
+                
+                # htop設定
+                if [[ -d "dotfiles/.config/htop" ]]; then
+                    if [[ -L "$HOME/.config/htop" ]]; then
+                        echo "  ⏭️  htop設定 (既にシンボリックリンク)"
+                    else
+                        [[ -d "$HOME/.config/htop" ]] && mv "$HOME/.config/htop" "$HOME/.config/htop.backup.$(date +%Y%m%d_%H%M%S)"
+                        ln -s "$SCRIPT_DIR/dotfiles/.config/htop" "$HOME/.config/htop"
+                        echo "  ✅ htop設定をリンクしました"
                     fi
                 fi
             fi
@@ -264,8 +300,6 @@ manage_develop() {
                 ".prettierrc"
                 ".prettierignore"
                 "eslint.config.js"
-                ".eslintrc.js"
-                ".eslintrc.json"
             )
             
             for file in "${dev_files[@]}"; do
@@ -275,12 +309,9 @@ manage_develop() {
                 fi
             done
             
-            # プロジェクトルートの設定ファイルもチェック
+            # プロジェクトルートの設定ファイルもチェック（存在する場合のみ）
             local project_files=(
-                "package.json"
-                "tsconfig.json"
                 ".gitignore"
-                "README.md"
             )
             
             for file in "${project_files[@]}"; do

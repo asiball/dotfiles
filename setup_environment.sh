@@ -9,12 +9,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 show_usage() {
-    echo "使用方法: $0 [generate|install|status] [all|dotfiles|brew|develop]"
+    echo "使用方法: $0 [generate|install|status|diff] [all|dotfiles|brew|develop]"
     echo ""
     echo "コマンド:"
     echo "  generate  現在の設定を収集してリポジトリに保存"
     echo "  install   リポジトリから設定をシステムにインストール"
     echo "  status    現在の同期状態を確認"
+    echo "  diff      現在の環境とコンフィグファイルの差分を表示"
     echo ""
     echo "対象："
     echo "  all       すべて（デフォルト）"
@@ -26,6 +27,7 @@ show_usage() {
     echo "  $0 generate        # すべての設定を収集"
     echo "  $0 install dotfiles # dotfilesのみインストール"
     echo "  $0 status          # 同期状態を確認"
+    echo "  $0 diff brew       # Homebrewパッケージの差分を表示"
 }
 
 # dotfiles管理
@@ -70,25 +72,25 @@ manage_dotfiles() {
             fi
             
             # neovim設定
-            if [[ -d "$HOME/.config/nvim" ]]; then
-                mkdir -p "dotfiles/.config/nvim"
-                cp -r "$HOME/.config/nvim/"* "dotfiles/.config/nvim/" 2>/dev/null || true
-                echo "  ✅ neovim設定をコピーしました"
-            fi
+            # if [[ -d "$HOME/.config/nvim" ]]; then
+            #     mkdir -p "dotfiles/.config/nvim"
+            #     cp -r "$HOME/.config/nvim/"* "dotfiles/.config/nvim/" 2>/dev/null || true
+            #     echo "  ✅ neovim設定をコピーしました"
+            # fi
             
             # GitHub CLI設定
-            if [[ -d "$HOME/.config/gh" ]]; then
-                mkdir -p "dotfiles/.config/gh"
-                cp -r "$HOME/.config/gh/"* "dotfiles/.config/gh/" 2>/dev/null || true
-                echo "  ✅ GitHub CLI設定をコピーしました"
-            fi
+            # if [[ -d "$HOME/.config/gh" ]]; then
+            #     mkdir -p "dotfiles/.config/gh"
+            #     cp -r "$HOME/.config/gh/"* "dotfiles/.config/gh/" 2>/dev/null || true
+            #     echo "  ✅ GitHub CLI設定をコピーしました"
+            # fi
             
             # htop設定
-            if [[ -d "$HOME/.config/htop" ]]; then
-                mkdir -p "dotfiles/.config/htop"
-                cp -r "$HOME/.config/htop/"* "dotfiles/.config/htop/" 2>/dev/null || true
-                echo "  ✅ htop設定をコピーしました"
-            fi
+            # if [[ -d "$HOME/.config/htop" ]]; then
+            #     mkdir -p "dotfiles/.config/htop"
+            #     cp -r "$HOME/.config/htop/"* "dotfiles/.config/htop/" 2>/dev/null || true
+            #     echo "  ✅ htop設定をコピーしました"
+            # fi
             ;;
             
         "install")
@@ -131,37 +133,26 @@ manage_dotfiles() {
                 fi
                 
                 # neovim設定
-                if [[ -d "dotfiles/.config/nvim" ]]; then
-                    if [[ -L "$HOME/.config/nvim" ]]; then
-                        echo "  ⏭️  neovim設定 (既にシンボリックリンク)"
-                    else
-                        [[ -d "$HOME/.config/nvim" ]] && mv "$HOME/.config/nvim" "$HOME/.config/nvim.backup.$(date +%Y%m%d_%H%M%S)"
-                        ln -s "$SCRIPT_DIR/dotfiles/.config/nvim" "$HOME/.config/nvim"
-                        echo "  ✅ neovim設定をリンクしました"
-                    fi
-                fi
+                # if [[ -d "dotfiles/.config/nvim" ]]; then
+                #     if [[ -L "$HOME/.config/nvim" ]]; then
+                #         echo "  ⏭️  neovim設定 (既にシンボリックリンク)"
+                #     else
+                #         [[ -d "$HOME/.config/nvim" ]] && mv "$HOME/.config/nvim" "$HOME/.config/nvim.backup.$(date +%Y%m%d_%H%M%S)"
+                #         ln -s "$SCRIPT_DIR/dotfiles/.config/nvim" "$HOME/.config/nvim"
+                #         echo "  ✅ neovim設定をリンクしました"
+                #     fi
+                # fi
                 
                 # GitHub CLI設定
-                if [[ -d "dotfiles/.config/gh" ]]; then
-                    if [[ -L "$HOME/.config/gh" ]]; then
-                        echo "  ⏭️  GitHub CLI設定 (既にシンボリックリンク)"
-                    else
-                        [[ -d "$HOME/.config/gh" ]] && mv "$HOME/.config/gh" "$HOME/.config/gh.backup.$(date +%Y%m%d_%H%M%S)"
-                        ln -s "$SCRIPT_DIR/dotfiles/.config/gh" "$HOME/.config/gh"
-                        echo "  ✅ GitHub CLI設定をリンクしました"
-                    fi
-                fi
-                
-                # htop設定
-                if [[ -d "dotfiles/.config/htop" ]]; then
-                    if [[ -L "$HOME/.config/htop" ]]; then
-                        echo "  ⏭️  htop設定 (既にシンボリックリンク)"
-                    else
-                        [[ -d "$HOME/.config/htop" ]] && mv "$HOME/.config/htop" "$HOME/.config/htop.backup.$(date +%Y%m%d_%H%M%S)"
-                        ln -s "$SCRIPT_DIR/dotfiles/.config/htop" "$HOME/.config/htop"
-                        echo "  ✅ htop設定をリンクしました"
-                    fi
-                fi
+                # if [[ -d "dotfiles/.config/gh" ]]; then
+                #     if [[ -L "$HOME/.config/gh" ]]; then
+                #         echo "  ⏭️  GitHub CLI設定 (既にシンボリックリンク)"
+                #     else
+                #         [[ -d "$HOME/.config/gh" ]] && mv "$HOME/.config/gh" "$HOME/.config/gh.backup.$(date +%Y%m%d_%H%M%S)"
+                #         ln -s "$SCRIPT_DIR/dotfiles/.config/gh" "$HOME/.config/gh"
+                #         echo "  ✅ GitHub CLI設定をリンクしました"
+                #     fi
+                # fi
             fi
             ;;
     esac
@@ -226,7 +217,7 @@ manage_brew() {
             # Caskアプリのインストール
             if [[ -f "Brewfile_cask" ]]; then
                 echo ""
-                echo "�️  Homebrew cask をインストール中..."
+                echo "Homebrew cask をインストール中..."
                 while IFS= read -r line; do
                     [[ -z "$line" ]] && continue
                     
@@ -342,6 +333,188 @@ manage_develop() {
     esac
 }
 
+# 環境とファイルの差分確認
+show_diff() {
+    echo "📋 環境差分を表示しています..."
+    echo ""
+    
+    # brewfiles差分確認
+    echo "🍺 Homebrew パッケージ差分:"
+    if [[ -f "brewfiles/Brewfile" ]]; then
+        echo "  📦 Homebrew formulae:"
+        show_brew_diff
+    else
+        echo "  ⚠️  Brewfile が見つかりません"
+    fi
+    
+    echo ""
+    if [[ -f "brewfiles/Brewfile_cask" ]]; then
+        echo "  🖥️  Homebrew cask:"
+        show_cask_diff
+    else
+        echo "  ⚠️  Brewfile_cask が見つかりません"
+    fi
+    
+    echo ""
+    if [[ -f "brewfiles/Masfiles" ]]; then
+        echo "  🍎 Mac App Store アプリ:"
+        show_mas_diff
+    else
+        echo "  ⚠️  Masfiles が見つかりません"
+    fi
+}
+
+show_brew_diff() {
+    local configfile_packages
+    local installed_packages
+    local missing_in_config
+    local missing_in_system
+    
+    # 設定ファイルのパッケージ一覧
+    configfile_packages=($(cat "brewfiles/Brewfile" 2>/dev/null | grep -v '^$' | sort))
+    
+    # 現在インストールされているパッケージ一覧
+    installed_packages=($(brew list --installed-on-request 2>/dev/null | sort))
+    
+    # 現在インストールされているが設定ファイルにないパッケージ
+    missing_in_config=($(comm -13 <(printf '%s\n' "${configfile_packages[@]}") <(printf '%s\n' "${installed_packages[@]}")))
+    
+    # 設定ファイルにあるが現在インストールされていないパッケージ
+    missing_in_system=($(comm -23 <(printf '%s\n' "${configfile_packages[@]}") <(printf '%s\n' "${installed_packages[@]}")))
+    
+    if [[ ${#missing_in_config[@]} -gt 0 ]]; then
+        echo "    ➕ インストール済みだが設定ファイルにないパッケージ:"
+        for pkg in "${missing_in_config[@]}"; do
+            echo "      • $pkg"
+        done
+    fi
+    
+    if [[ ${#missing_in_system[@]} -gt 0 ]]; then
+        echo "    ➖ 設定ファイルにあるがインストールされていないパッケージ:"
+        for pkg in "${missing_in_system[@]}"; do
+            echo "      • $pkg"
+        done
+    fi
+    
+    if [[ ${#missing_in_config[@]} -eq 0 && ${#missing_in_system[@]} -eq 0 ]]; then
+        echo "    ✅ 設定ファイルと現在の環境が一致しています"
+    fi
+}
+
+show_cask_diff() {
+    local configfile_casks
+    local installed_casks
+    local missing_in_config
+    local missing_in_system
+    
+    # 設定ファイルのcask一覧
+    configfile_casks=($(cat "brewfiles/Brewfile_cask" 2>/dev/null | grep -v '^$' | sort))
+    
+    # 現在インストールされているcask一覧
+    installed_casks=($(brew list --cask -1 2>/dev/null | sort))
+    
+    # 現在インストールされているが設定ファイルにないcask
+    missing_in_config=($(comm -13 <(printf '%s\n' "${configfile_casks[@]}") <(printf '%s\n' "${installed_casks[@]}")))
+    
+    # 設定ファイルにあるが現在インストールされていないcask
+    missing_in_system=($(comm -23 <(printf '%s\n' "${configfile_casks[@]}") <(printf '%s\n' "${installed_casks[@]}")))
+    
+    if [[ ${#missing_in_config[@]} -gt 0 ]]; then
+        echo "    ➕ インストール済みだが設定ファイルにないアプリ:"
+        for cask in "${missing_in_config[@]}"; do
+            echo "      • $cask"
+        done
+    fi
+    
+    if [[ ${#missing_in_system[@]} -gt 0 ]]; then
+        echo "    ➖ 設定ファイルにあるがインストールされていないアプリ:"
+        for cask in "${missing_in_system[@]}"; do
+            echo "      • $cask"
+        done
+    fi
+    
+    if [[ ${#missing_in_config[@]} -eq 0 && ${#missing_in_system[@]} -eq 0 ]]; then
+        echo "    ✅ 設定ファイルと現在の環境が一致しています"
+    fi
+}
+
+show_mas_diff() {
+    if ! command -v mas >/dev/null 2>&1; then
+        echo "    ⚠️  mas がインストールされていません"
+        return
+    fi
+    
+    local configfile_apps
+    local installed_apps
+    local missing_in_config
+    local missing_in_system
+    
+    # 設定ファイルのアプリ一覧（IDのみ）
+    configfile_apps=($(cat "brewfiles/Masfiles" 2>/dev/null | grep -E '^[0-9]+' | awk '{print $1}' | sort))
+    
+    # 現在インストールされているアプリ一覧（IDのみ）
+    installed_apps=($(mas list 2>/dev/null | awk '{print $1}' | sort))
+    
+    # 現在インストールされているが設定ファイルにないアプリ
+    missing_in_config=($(comm -13 <(printf '%s\n' "${configfile_apps[@]}") <(printf '%s\n' "${installed_apps[@]}")))
+    
+    # 設定ファイルにあるが現在インストールされていないアプリ
+    missing_in_system=($(comm -23 <(printf '%s\n' "${configfile_apps[@]}") <(printf '%s\n' "${installed_apps[@]}")))
+    
+    if [[ ${#missing_in_config[@]} -gt 0 ]]; then
+        echo "    ➕ インストール済みだが設定ファイルにないアプリ:"
+        for app_id in "${missing_in_config[@]}"; do
+            local app_name=$(mas list | grep "^$app_id" | sed 's/^[0-9]* *//' | sed 's/ *(.*)$//')
+            echo "      • $app_name ($app_id)"
+        done
+    fi
+    
+    if [[ ${#missing_in_system[@]} -gt 0 ]]; then
+        echo "    ➖ 設定ファイルにあるがインストールされていないアプリ:"
+        for app_id in "${missing_in_system[@]}"; do
+            local app_name=$(grep "^$app_id" "brewfiles/Masfiles" | sed 's/^[0-9]* *//' | sed 's/ *(.*)$//')
+            echo "      • $app_name ($app_id)"
+        done
+    fi
+    
+    if [[ ${#missing_in_config[@]} -eq 0 && ${#missing_in_system[@]} -eq 0 ]]; then
+        echo "    ✅ 設定ファイルと現在の環境が一致しています"
+    fi
+}
+
+show_brew_diff_only() {
+    echo "🍺 Homebrew パッケージ差分:"
+    
+    if [[ -f "brewfiles/Brewfile" ]]; then
+        echo "  📦 Homebrew formulae:"
+        show_brew_diff
+    else
+        echo "  ⚠️  Brewfile が見つかりません"
+    fi
+    
+    echo ""
+    if [[ -f "brewfiles/Brewfile_cask" ]]; then
+        echo "  🖥️  Homebrew cask:"
+        show_cask_diff
+    else
+        echo "  ⚠️  Brewfile_cask が見つかりません"
+    fi
+    
+    cd "$SCRIPT_DIR"
+}
+
+show_dotfiles_diff() {
+    echo "🏠 dotfiles 差分:"
+    echo "  ℹ️  dotfiles は手動での確認をお勧めします"
+    echo "    設定ファイルの内容は個別に比較する必要があります"
+}
+
+show_develop_diff() {
+    echo "💻 開発設定 差分:"
+    echo "  ℹ️  開発設定は手動での確認をお勧めします"
+    echo "    設定ファイルの内容は個別に比較する必要があります"
+}
+
 # 同期状態確認
 check_status() {
     echo "📊 環境同期状態を確認しています..."
@@ -393,23 +566,23 @@ check_status() {
     echo ""
     
     # develop状態確認
-    echo "💻 develop:"
-    if [[ -d "develop" ]]; then
-        local dev_count=$(find develop -type f | wc -l | tr -d ' ')
-        echo "  📄 設定ファイル: $dev_count 個"
-        
-        for file in develop/*; do
-            [[ -f "$file" ]] || continue
-            local basename=$(basename "$file")
-            if [[ -f "$HOME/$basename" ]]; then
-                echo "  ✅ $basename"
-            else
-                echo "  ❌ $basename (未インストール)"
-            fi
-        done
-    else
-        echo "  ⚠️  developディレクトリが見つかりません"
-    fi
+    # echo "💻 develop:"
+    # if [[ -d "develop" ]]; then
+    #     local dev_count=$(find develop -type f | wc -l | tr -d ' ')
+    #     echo "  📄 設定ファイル: $dev_count 個"
+    #     
+    #     for file in develop/*; do
+    #         [[ -f "$file" ]] || continue
+    #         local basename=$(basename "$file")
+    #         if [[ -f "$HOME/$basename" ]]; then
+    #             echo "  ✅ $basename"
+    #         else
+    #             echo "  ❌ $basename (未インストール)"
+    #         fi
+    #     done
+    # else
+    #     echo "  ⚠️  developディレクトリが見つかりません"
+    # fi
 }
 
 # メイン処理
@@ -451,6 +624,18 @@ case "$ACTION" in
         
     "status")
         check_status
+        ;;
+        
+    "diff")
+        case "$TARGET" in
+            "all")
+                show_diff
+                ;;
+            "dotfiles") show_dotfiles_diff ;;
+            "brew") show_brew_diff_only ;;
+            "develop") show_develop_diff ;;
+            *) show_usage ;;
+        esac
         ;;
         
     "help"|"-h"|"--help")

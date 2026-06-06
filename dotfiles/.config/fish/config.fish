@@ -2,7 +2,7 @@ export LSCOLORS=Gxfxcxdxbxegedabagacad
 
 # https://github.com/oh-my-fish/plugin-peco
 function fish_user_key_bindings
-  bind \cr 'peco_select_history (commandline -b)'
+    bind \cr 'peco_select_history (commandline -b)'
 end
 
 
@@ -60,7 +60,7 @@ set __fish_git_prompt_char_upstream_behind '-'
 
 
 
-### ====== alias ====== 
+### ====== alias ======
 alias l='ls -l'
 alias h='history'
 alias python='python3'
@@ -77,6 +77,8 @@ alias vimcron='vim ~/.cron.conf; croncron'
 ### ====== PATH =======
 fish_add_path /opt/homebrew/bin
 fish_add_path /opt/homebrew/sbin
+fish_add_path $HOME/.local/bin
+fish_add_path $HOME/.local/sbin
 ### ====================
 
 
@@ -89,12 +91,16 @@ end
 
 
 
-# Created by `pipx` on 2024-03-13 11:10:06
-set PATH $PATH $HOME/.local/bin
-
 # add ssh keys on 1password
 set -x SSH_AUTH_SOCK ~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 
 if command -q uv
     uv generate-shell-completion fish | source
+end
+
+# Added by OrbStack: command-line tools and integration
+# This won't be added again if you remove it.
+if command -q orbstack
+    fish_add_path ~/.orbstack/bin
+    source ~/.orbstack/shell/init2.fish 2>/dev/null || :
 end

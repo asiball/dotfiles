@@ -21,7 +21,7 @@ nnoremap k gk
 nnoremap <Down> gj
 nnoremap <Up> gk
 " showbreak
-set showbreak=↪
+set showbreak=on
 " 入力モードでのカーソル移動
 inoremap <C-j> <Down>
 inoremap <C-k> <Up>

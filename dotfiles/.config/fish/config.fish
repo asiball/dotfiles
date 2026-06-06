@@ -64,7 +64,7 @@ set __fish_git_prompt_char_upstream_behind '-'
 alias l='ls -l'
 alias h='history'
 alias python='python3'
-alias pwdc='pwd| tr -d ''\n'' | pbcopy'
+alias pwdc "pwd | tr -d '\n' | pbcopy"
 alias o='open'
 alias tree='tree -NC'
 alias cronlist='crontab -l'
@@ -82,31 +82,19 @@ fish_add_path /opt/homebrew/sbin
 
 
 ### ======= iTerm =====
-source ~/.iterm2_shell_integration.fish
+if test -f ~/.iterm2_shell_integration.fish
+    source ~/.iterm2_shell_integration.fish
+end
 ### ====================
 
 
-
-### ==== pyenv ====
-#alias brew="env PATH=(string replace (pyenv root)/shims '' \"\$PATH\") brew"
-#status is-login; and pyenv init --path | source
-#status is-interactive; and pyenv init - | source
-### ====================
-
-
-### ====== Conda =====
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-# eval $HOME/miniconda3/bin/conda "shell.fish" "hook" $argv | source
-# <<< conda initialize <<<
-# conda activate conda_jupyter
-# alias act='conda activate'
-# alias deact='conda deactivate'
-### ====================
 
 # Created by `pipx` on 2024-03-13 11:10:06
 set PATH $PATH $HOME/.local/bin
 
 # add ssh keys on 1password
 set -x SSH_AUTH_SOCK ~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
-uv generate-shell-completion fish | source
+
+if command -q uv
+    uv generate-shell-completion fish | source
+end

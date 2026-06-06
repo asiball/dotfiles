@@ -6,5 +6,3 @@ if [ $UID -eq 0 ]; then
 else
     PS1="\n\[\033[32;01m\]\u@\h\[\033[97m\]:\[\033[01;93m\]\w\[\033[97m\] \\$\[\033[00m\] "
 fi
-
-#source "$HOME/.cargo/env"

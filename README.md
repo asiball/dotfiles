@@ -27,7 +27,7 @@ dotfiles/
     ├── .zshrc
     ├── .gitconfig
     ├── .vimrc
-    ├── .tmuxrc
+    ├── .tmux.conf
     └── .config/
         └── fish/            # Fish shell 設定
 ```
@@ -48,6 +48,13 @@ cd ~/dotfiles
 1. **Homebrew が無ければ公式インストーラで導入**し PATH を通す
 2. `Brewfile` から brew / cask を一括インストール（`stow` もここで導入）
 3. `dotfiles/` を **stow** で `$HOME` に展開（既存ファイルは `*.backup.<timestamp>` へ退避）
+
+fish プラグイン（peco / bobthefish）は fisher で別途インストールが必要です:
+
+```fish
+# fish を起動後
+fisher install < ~/.config/fish/fish_plugins
+```
 
 Mac App Store アプリ（`Brewfile.mas`）は**既定でスキップ**されます。含めるには App Store へサインインしたうえで `MAS=1` を付けて実行します:
 

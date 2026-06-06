@@ -10,5 +10,3 @@
   - 第1引数（サブコマンド）: `generate` / `install` / `status` / `diff` / `help`
   - 第2引数（対象）: `all` / `dotfiles` / `brew`
 - 本体は bash のまま。補完ファイルを追加するだけでよい（言語の書き換え不要）。
-
-> メモ: `gh` 未導入のため GitHub issue 化は保留。導入後に本項目を issue へ転記する。

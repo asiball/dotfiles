@@ -31,12 +31,11 @@ set whichwrap=b,s,h,l,<,>,[,],~ " カーソルの左右移動で行末から次�
 " ノーマルモード時にenterで改行
 nnoremap <CR> i<CR><Esc>
 
-" ####インテンド####
-set tabstop=2      " インデントをスペース4つ分に設定
+" ####インデント####
+set tabstop=2      " タブ幅
 set smartindent    " オートインデント
-set tabstop=2      " タブ幅をスペース4つ分に
-set expandtab      " tabを半角で
-set shiftwidth=2   " vimが自動で生成するtab幅をスペース4つ分に
+set expandtab      " タブをスペースに展開
+set shiftwidth=2   " インデント幅
 
 " ####検索設定####
 set ignorecase     " 大文字/小文字の区別なく検索する

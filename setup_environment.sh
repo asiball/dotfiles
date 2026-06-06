@@ -42,38 +42,45 @@ manage_dotfiles() {
     case "$action" in
         "generate")
             echo "🏠 dotfiles を収集しています..."
-            
+
             # dotfilesディレクトリが存在しない場合は作成
             mkdir -p "dotfiles/.config/fish"
-            
+
             # ホームディレクトリの設定ファイルをコピー
             local dotfiles=(
                 ".bashrc"
                 ".gitconfig"
-                ".tmuxrc"
+                ".tmux.conf"
                 ".vimrc"
                 ".zshrc"
             )
-            
+            local file src dst conf
+
             for file in "${dotfiles[@]}"; do
-                if [[ -f "$HOME/$file" ]]; then
-                    cp "$HOME/$file" "dotfiles/$file"
+                src="$HOME/$file"
+                dst="dotfiles/$file"
+                if [[ "$src" -ef "$dst" ]]; then
+                    : # symlink 展開済みで同一ファイル、スキップ
+                elif [[ -f "$src" ]]; then
+                    cp "$src" "$dst"
                     echo "  ✅ $file をコピーしました"
                 else
-                    echo "  ⚠️  $HOME/$file が見つかりません"
+                    echo "  ⚠️  $src が見つかりません"
                 fi
             done
-            
-            # .configディレクトリの処理
+
+            # .config ディレクトリの処理
             if [[ -d "$HOME/.config/fish" ]]; then
-                if [[ -f "$HOME/.config/fish/config.fish" ]]; then
-                    cp "$HOME/.config/fish/config.fish" "dotfiles/.config/fish/"
-                    echo "  ✅ fish/config.fish をコピーしました"
-                fi
-                if [[ -f "$HOME/.config/fish/fish_plugins" ]]; then
-                    cp "$HOME/.config/fish/fish_plugins" "dotfiles/.config/fish/"
-                    echo "  ✅ fish/fish_plugins をコピーしました"
-                fi
+                for conf in config.fish fish_plugins; do
+                    src="$HOME/.config/fish/$conf"
+                    dst="dotfiles/.config/fish/$conf"
+                    if [[ "$src" -ef "$dst" ]]; then
+                        : # symlink 展開済みで同一ファイル、スキップ
+                    elif [[ -f "$src" ]]; then
+                        cp "$src" "dotfiles/.config/fish/"
+                        echo "  ✅ fish/$conf をコピーしました"
+                    fi
+                done
             fi
             ;;
             
@@ -165,6 +172,7 @@ manage_brew() {
     case "$action" in
         "generate")
             echo "🍺 Brewfile を生成しています..."
+            ensure_homebrew
             brew bundle dump --force --no-vscode --no-mas --file="$brewfile"
             echo "✅ Brewfile を生成しました ($brewfile)"
 
@@ -204,11 +212,11 @@ show_brew_diff() {
         return
     fi
 
-    echo "  ➖ Brewfile にあるが未インストール:"
+    echo "  依存関係チェック:"
     brew bundle check --verbose --file="$brewfile" 2>&1 | sed 's/^/    /'
 
     echo ""
-    echo "  ➕ インストール済みだが Brewfile にない (cleanup 候補):"
+    echo "  インストール済みだが Brewfile にない (cleanup 候補):"
     brew bundle cleanup --file="$brewfile" 2>&1 | sed 's/^/    /'
 
     if mas_enabled; then
@@ -326,12 +334,10 @@ case "$ACTION" in
     "help"|"-h"|"--help")
         show_usage
         ;;
-        
+
     *)
         echo "❌ 無効なコマンド: $ACTION"
         show_usage
+        exit 1
         ;;
 esac
-
-echo ""
-echo "🎉 操作が完了しました！"

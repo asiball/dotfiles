@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 環境管理統合スクリプト
-# dotfiles、brewfiles、developファイルの同期とセットアップを管理
+# dotfiles(stow) と Homebrew(brew bundle) の収集・展開を束ねる HUB
 
 set -e
 
@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 show_usage() {
-    echo "使用方法: $0 [generate|install|status|diff] [all|dotfiles|brew|develop]"
+    echo "使用方法: $0 [generate|install|status|diff] [all|dotfiles|brew]"
     echo ""
     echo "コマンド:"
     echo "  generate  現在の設定を収集してリポジトリに保存"
@@ -19,15 +19,20 @@ show_usage() {
     echo ""
     echo "対象："
     echo "  all       すべて（デフォルト）"
-    echo "  dotfiles  設定ファイルのみ"
-    echo "  brew      Homebrewパッケージのみ"
-    echo "  develop   開発設定のみ"
+    echo "  dotfiles  設定ファイルのみ（stow で展開）"
+    echo "  brew      Homebrewパッケージのみ（brew bundle）"
     echo ""
     echo "例："
-    echo "  $0 generate        # すべての設定を収集"
-    echo "  $0 install dotfiles # dotfilesのみインストール"
-    echo "  $0 status          # 同期状態を確認"
-    echo "  $0 diff brew       # Homebrewパッケージの差分を表示"
+    echo "  $0 install all      # Homebrew導入→パッケージ→dotfiles を一括展開"
+    echo "  $0 generate         # 現在の設定をリポジトリに収集"
+    echo "  $0 install dotfiles # dotfilesのみ stow で展開"
+    echo "  $0 status           # 同期状態を確認"
+    echo "  $0 diff brew        # Homebrewパッケージの差分を表示"
+    echo ""
+    echo "環境変数:"
+    echo "  MAS=1     Mac App Store アプリも対象に含める（既定はスキップ。要サインイン）"
+    echo ""
+    echo "※ eslint/prettier テンプレートは templates/ に静置き（手動コピーで利用）"
 }
 
 # dotfiles管理
@@ -70,449 +75,138 @@ manage_dotfiles() {
                     echo "  ✅ fish/fish_plugins をコピーしました"
                 fi
             fi
-            
-            # neovim設定
-            # if [[ -d "$HOME/.config/nvim" ]]; then
-            #     mkdir -p "dotfiles/.config/nvim"
-            #     cp -r "$HOME/.config/nvim/"* "dotfiles/.config/nvim/" 2>/dev/null || true
-            #     echo "  ✅ neovim設定をコピーしました"
-            # fi
-            
-            # GitHub CLI設定
-            # if [[ -d "$HOME/.config/gh" ]]; then
-            #     mkdir -p "dotfiles/.config/gh"
-            #     cp -r "$HOME/.config/gh/"* "dotfiles/.config/gh/" 2>/dev/null || true
-            #     echo "  ✅ GitHub CLI設定をコピーしました"
-            # fi
-            
-            # htop設定
-            # if [[ -d "$HOME/.config/htop" ]]; then
-            #     mkdir -p "dotfiles/.config/htop"
-            #     cp -r "$HOME/.config/htop/"* "dotfiles/.config/htop/" 2>/dev/null || true
-            #     echo "  ✅ htop設定をコピーしました"
-            # fi
             ;;
             
         "install")
-            echo "🏠 dotfiles をインストールしています..."
-            
-            # シンボリックリンクの作成
-            for file in dotfiles/.*; do
-                [[ "$file" == "dotfiles/." || "$file" == "dotfiles/.." ]] && continue
-                [[ -f "$file" ]] || continue
-                
-                local basename=$(basename "$file")
-                local target="$HOME/$basename"
-                
-                if [[ -L "$target" ]]; then
-                    echo "  ⏭️  $basename (既にシンボリックリンク)"
-                elif [[ -f "$target" ]]; then
-                    echo "  🔄 $basename をバックアップして置き換え"
-                    mv "$target" "${target}.backup.$(date +%Y%m%d_%H%M%S)"
-                    ln -s "$SCRIPT_DIR/$file" "$target"
-                    echo "  ✅ $basename をリンクしました"
-                else
-                    ln -s "$SCRIPT_DIR/$file" "$target"
-                    echo "  ✅ $basename をリンクしました"
+            echo "🏠 dotfiles をインストールしています (stow に委譲)..."
+            ensure_stow
+
+            # ~/.config 全体が repo へ折り畳まれるのを防ぐため、親を実体で用意
+            mkdir -p "$HOME/.config"
+
+            # 競合退避: stow が管理する各リーフについて、対応する $HOME 側が
+            # 実体（非symlink）なら *.backup.<timestamp> へ退避する
+            local timestamp
+            timestamp=$(date +%Y%m%d_%H%M%S)
+            local leaf rel target
+            while IFS= read -r leaf; do
+                rel="${leaf#"$SCRIPT_DIR"/dotfiles/}"
+                target="$HOME/$rel"
+                if [[ -e "$target" && ! -L "$target" ]]; then
+                    mkdir -p "$(dirname "$target")"
+                    mv "$target" "${target}.backup.${timestamp}"
+                    echo "  💾 $rel を退避しました"
                 fi
-            done
-            
-            # .configディレクトリの処理
-            if [[ -d "dotfiles/.config" ]]; then
-                mkdir -p "$HOME/.config"
-                
-                # fish設定
-                if [[ -d "dotfiles/.config/fish" ]]; then
-                    if [[ -L "$HOME/.config/fish" ]]; then
-                        echo "  ⏭️  fish設定 (既にシンボリックリンク)"
-                    else
-                        [[ -d "$HOME/.config/fish" ]] && mv "$HOME/.config/fish" "$HOME/.config/fish.backup.$(date +%Y%m%d_%H%M%S)"
-                        ln -s "$SCRIPT_DIR/dotfiles/.config/fish" "$HOME/.config/fish"
-                        echo "  ✅ fish設定をリンクしました"
-                    fi
-                fi
-                
-                # neovim設定
-                # if [[ -d "dotfiles/.config/nvim" ]]; then
-                #     if [[ -L "$HOME/.config/nvim" ]]; then
-                #         echo "  ⏭️  neovim設定 (既にシンボリックリンク)"
-                #     else
-                #         [[ -d "$HOME/.config/nvim" ]] && mv "$HOME/.config/nvim" "$HOME/.config/nvim.backup.$(date +%Y%m%d_%H%M%S)"
-                #         ln -s "$SCRIPT_DIR/dotfiles/.config/nvim" "$HOME/.config/nvim"
-                #         echo "  ✅ neovim設定をリンクしました"
-                #     fi
-                # fi
-                
-                # GitHub CLI設定
-                # if [[ -d "dotfiles/.config/gh" ]]; then
-                #     if [[ -L "$HOME/.config/gh" ]]; then
-                #         echo "  ⏭️  GitHub CLI設定 (既にシンボリックリンク)"
-                #     else
-                #         [[ -d "$HOME/.config/gh" ]] && mv "$HOME/.config/gh" "$HOME/.config/gh.backup.$(date +%Y%m%d_%H%M%S)"
-                #         ln -s "$SCRIPT_DIR/dotfiles/.config/gh" "$HOME/.config/gh"
-                #         echo "  ✅ GitHub CLI設定をリンクしました"
-                #     fi
-                # fi
-            fi
+            done < <(find "$SCRIPT_DIR/dotfiles" -type f)
+
+            # シンボリックリンクを stow で作成（既存リンクは張り直す）
+            stow --restow --target="$HOME" --dir="$SCRIPT_DIR" dotfiles
+            echo "  ✅ dotfiles をリンクしました"
             ;;
     esac
 }
 
-# Homebrew管理
+# Homebrew 本体を用意する（クリーンmacOS対応）
+ensure_homebrew() {
+    if command -v brew >/dev/null 2>&1; then
+        return 0
+    fi
+
+    echo "🍺 Homebrew が見つかりません。公式インストーラで導入します..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    # PATH を通す（Apple Silicon / Intel 両対応）
+    if [[ -x /opt/homebrew/bin/brew ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [[ -x /usr/local/bin/brew ]]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    fi
+}
+
+# stow を用意する（dotfiles 展開の前提）
+ensure_stow() {
+    command -v stow >/dev/null 2>&1 && return 0
+    ensure_homebrew
+    echo "📦 GNU stow を導入します..."
+    brew install stow
+}
+
+# Mac App Store アプリ(Brewfile.mas)を処理すべきか。
+# 既定はスキップ。MAS=1 かつ mas 導入済みのときだけ true。
+mas_enabled() {
+    [[ "${MAS:-}" == "1" ]] && command -v mas >/dev/null 2>&1
+}
+
+# Homebrew管理（brew bundle に委譲）
 manage_brew() {
     local action="$1"
-    cd "$SCRIPT_DIR/brewfiles"
-    
-    case "$action" in
-        "generate")
-            echo "🍺 Homebrew パッケージリストを生成しています..."
-            
-            # Brewfile の生成
-            echo "📦 Homebrew formulae を生成中..."
-            brew list --installed-on-request > Brewfile
-            echo "✅ Brewfile が生成されました"
-            
-            # Brewfile_cask の生成
-            echo "📱 Homebrew cask を生成中..."
-            brew list --cask -1 > Brewfile_cask
-            echo "✅ Brewfile_cask が生成されました"
-            
-            # Masfiles の生成
-            if command -v mas >/dev/null 2>&1; then
-                echo "🍎 Mac App Store アプリを生成中..."
-                mas list > Masfiles
-                echo "✅ Masfiles が生成されました"
-            else
-                echo "⚠️  mas がインストールされていないため、Masfiles をスキップします"
-            fi
-            ;;
-            
-        "install")
-            echo "🍺 Homebrew パッケージをインストールしています..."
-            
-            local install_count=0
-            local skip_count=0
-            
-            # Homebrewパッケージのインストール
-            if [[ -f "Brewfile" ]]; then
-                echo "🔧 Homebrew formulae をインストール中..."
-                while IFS= read -r line; do
-                    [[ -z "$line" ]] && continue
-                    
-                    if brew list "$line" &>/dev/null; then
-                        echo "  ⏭️  $line (既にインストール済み)"
-                        ((skip_count++))
-                    else
-                        echo "  ⬇️  $line をインストール中..."
-                        if brew install "$line"; then
-                            echo "  ✅ $line をインストールしました"
-                            ((install_count++))
-                        else
-                            echo "  ❌ $line のインストールに失敗しました"
-                        fi
-                    fi
-                done < Brewfile
-            fi
-            
-            # Caskアプリのインストール
-            if [[ -f "Brewfile_cask" ]]; then
-                echo ""
-                echo "Homebrew cask をインストール中..."
-                while IFS= read -r line; do
-                    [[ -z "$line" ]] && continue
-                    
-                    if brew list --cask "$line" &>/dev/null; then
-                        echo "  ⏭️  $line (既にインストール済み)"
-                        ((skip_count++))
-                    else
-                        echo "  ⬇️  $line をインストール中..."
-                        if brew install --cask "$line"; then
-                            echo "  ✅ $line をインストールしました"
-                            ((install_count++))
-                        else
-                            echo "  ❌ $line のインストールに失敗しました"
-                        fi
-                    fi
-                done < Brewfile_cask
-            fi
-            
-            # Mac App Storeアプリのインストール
-            if command -v mas >/dev/null 2>&1 && [[ -f "Masfiles" ]]; then
-                echo ""
-                echo "🍎 Mac App Store アプリをインストール中..."
-                while IFS= read -r line; do
-                    [[ -z "$line" ]] && continue
-                    
-                    # ID部分を抽出（行の最初の数字部分）
-                    if [[ "$line" =~ ^([0-9]+) ]]; then
-                        local app_id="${BASH_REMATCH[1]}"
-                        local app_name=$(echo "$line" | sed 's/^[0-9]* *//' | sed 's/ *(.*)$//')
-                        
-                        if mas list | grep -q "^$app_id"; then
-                            echo "  ⏭️  $app_name (既にインストール済み)"
-                            ((skip_count++))
-                        else
-                            echo "  ⬇️  $app_name をインストール中..."
-                            if mas install "$app_id"; then
-                                echo "  ✅ $app_name をインストールしました"
-                                ((install_count++))
-                            else
-                                echo "  ❌ $app_name のインストールに失敗しました"
-                            fi
-                        fi
-                    fi
-                done < Masfiles
-            else
-                echo ""
-                echo "⚠️  mas がインストールされていないため、Mac App Store アプリのインストールをスキップします"
-            fi
-            
-            echo ""
-            echo "📊 結果: $install_count 個のパッケージをインストール、$skip_count 個をスキップ"
-            ;;
-    esac
-    
-    cd "$SCRIPT_DIR"
-}
+    local brewfile="$SCRIPT_DIR/brewfiles/Brewfile"
+    local masfile="$SCRIPT_DIR/brewfiles/Brewfile.mas"
 
-# 開発設定管理
-manage_develop() {
-    local action="$1"
-    
     case "$action" in
         "generate")
-            echo "💻 開発設定を収集しています..."
-            
-            # developディレクトリが存在しない場合は作成
-            mkdir -p "develop"
-            
-            # よく使われる設定ファイルをチェック
-            local dev_files=(
-                ".prettierrc"
-                ".prettierignore"
-                "eslint.config.js"
-            )
-            
-            for file in "${dev_files[@]}"; do
-                if [[ -f "$HOME/$file" ]]; then
-                    cp "$HOME/$file" "develop/$file"
-                    echo "  ✅ $file をコピーしました"
-                fi
-            done
-            
-            # プロジェクトルートの設定ファイルもチェック（存在する場合のみ）
-            local project_files=(
-                ".gitignore"
-            )
-            
-            for file in "${project_files[@]}"; do
-                if [[ -f "$file" ]]; then
-                    cp "$file" "develop/$file"
-                    echo "  ✅ $file をコピーしました"
-                fi
-            done
+            echo "🍺 Brewfile を生成しています..."
+            brew bundle dump --force --no-vscode --no-mas --file="$brewfile"
+            echo "✅ Brewfile を生成しました ($brewfile)"
+
+            if mas_enabled; then
+                brew bundle dump --force --no-vscode --mas \
+                    --no-formulae --no-casks --no-taps --file="$masfile"
+                echo "✅ Brewfile.mas を生成しました ($masfile)"
+            else
+                echo "ℹ️  mas はスキップしました（Brewfile.mas は保持）。収集するには MAS=1（要サインイン）"
+            fi
             ;;
-            
+
         "install")
-            echo "💻 開発設定をインストールしています..."
-            
-            for file in develop/*; do
-                [[ -f "$file" ]] || continue
-                local basename=$(basename "$file")
-                local target="$HOME/$basename"
-                
-                if [[ -f "$target" ]]; then
-                    echo "  🔄 $basename を更新"
-                    cp "$file" "$target"
-                else
-                    cp "$file" "$target"
-                    echo "  ✅ $basename をコピーしました"
-                fi
-            done
+            echo "🍺 Brewfile からインストールしています..."
+            ensure_homebrew
+            # --no-upgrade: インストール済みは更新せずスキップ（従来の挙動を踏襲）
+            brew bundle install --no-upgrade --file="$brewfile"
+
+            if mas_enabled; then
+                echo "🍎 Mac App Store アプリをインストールしています..."
+                brew bundle install --no-upgrade --file="$masfile"
+            else
+                echo "ℹ️  Mac App Store アプリはスキップしました（含めるには MAS=1、要サインイン）"
+            fi
             ;;
     esac
 }
 
-# 環境とファイルの差分確認
-show_diff() {
-    echo "📋 環境差分を表示しています..."
-    echo ""
-    
-    # brewfiles差分確認
-    echo "🍺 Homebrew パッケージ差分:"
-    if [[ -f "brewfiles/Brewfile" ]]; then
-        echo "  📦 Homebrew formulae:"
-        show_brew_diff
-    else
-        echo "  ⚠️  Brewfile が見つかりません"
-    fi
-    
-    echo ""
-    if [[ -f "brewfiles/Brewfile_cask" ]]; then
-        echo "  🖥️  Homebrew cask:"
-        show_cask_diff
-    else
-        echo "  ⚠️  Brewfile_cask が見つかりません"
-    fi
-    
-    echo ""
-    if [[ -f "brewfiles/Masfiles" ]]; then
-        echo "  🍎 Mac App Store アプリ:"
-        show_mas_diff
-    else
-        echo "  ⚠️  Masfiles が見つかりません"
-    fi
-}
-
+# 環境とファイルの差分確認（brew bundle に委譲）
 show_brew_diff() {
-    local configfile_packages
-    local installed_packages
-    local missing_in_config
-    local missing_in_system
-    
-    # 設定ファイルのパッケージ一覧
-    configfile_packages=($(cat "brewfiles/Brewfile" 2>/dev/null | grep -v '^$' | sort))
-    
-    # 現在インストールされているパッケージ一覧
-    installed_packages=($(brew list --installed-on-request 2>/dev/null | sort))
-    
-    # 現在インストールされているが設定ファイルにないパッケージ
-    missing_in_config=($(comm -13 <(printf '%s\n' "${configfile_packages[@]}") <(printf '%s\n' "${installed_packages[@]}")))
-    
-    # 設定ファイルにあるが現在インストールされていないパッケージ
-    missing_in_system=($(comm -23 <(printf '%s\n' "${configfile_packages[@]}") <(printf '%s\n' "${installed_packages[@]}")))
-    
-    if [[ ${#missing_in_config[@]} -gt 0 ]]; then
-        echo "    ➕ インストール済みだが設定ファイルにないパッケージ:"
-        for pkg in "${missing_in_config[@]}"; do
-            echo "      • $pkg"
-        done
-    fi
-    
-    if [[ ${#missing_in_system[@]} -gt 0 ]]; then
-        echo "    ➖ 設定ファイルにあるがインストールされていないパッケージ:"
-        for pkg in "${missing_in_system[@]}"; do
-            echo "      • $pkg"
-        done
-    fi
-    
-    if [[ ${#missing_in_config[@]} -eq 0 && ${#missing_in_system[@]} -eq 0 ]]; then
-        echo "    ✅ 設定ファイルと現在の環境が一致しています"
-    fi
-}
+    local brewfile="$SCRIPT_DIR/brewfiles/Brewfile"
+    local masfile="$SCRIPT_DIR/brewfiles/Brewfile.mas"
+    echo "🍺 Homebrew パッケージ差分:"
 
-show_cask_diff() {
-    local configfile_casks
-    local installed_casks
-    local missing_in_config
-    local missing_in_system
-    
-    # 設定ファイルのcask一覧
-    configfile_casks=($(cat "brewfiles/Brewfile_cask" 2>/dev/null | grep -v '^$' | sort))
-    
-    # 現在インストールされているcask一覧
-    installed_casks=($(brew list --cask -1 2>/dev/null | sort))
-    
-    # 現在インストールされているが設定ファイルにないcask
-    missing_in_config=($(comm -13 <(printf '%s\n' "${configfile_casks[@]}") <(printf '%s\n' "${installed_casks[@]}")))
-    
-    # 設定ファイルにあるが現在インストールされていないcask
-    missing_in_system=($(comm -23 <(printf '%s\n' "${configfile_casks[@]}") <(printf '%s\n' "${installed_casks[@]}")))
-    
-    if [[ ${#missing_in_config[@]} -gt 0 ]]; then
-        echo "    ➕ インストール済みだが設定ファイルにないアプリ:"
-        for cask in "${missing_in_config[@]}"; do
-            echo "      • $cask"
-        done
-    fi
-    
-    if [[ ${#missing_in_system[@]} -gt 0 ]]; then
-        echo "    ➖ 設定ファイルにあるがインストールされていないアプリ:"
-        for cask in "${missing_in_system[@]}"; do
-            echo "      • $cask"
-        done
-    fi
-    
-    if [[ ${#missing_in_config[@]} -eq 0 && ${#missing_in_system[@]} -eq 0 ]]; then
-        echo "    ✅ 設定ファイルと現在の環境が一致しています"
-    fi
-}
-
-show_mas_diff() {
-    if ! command -v mas >/dev/null 2>&1; then
-        echo "    ⚠️  mas がインストールされていません"
+    if [[ ! -f "$brewfile" ]]; then
+        echo "  ⚠️  Brewfile が見つかりません"
         return
     fi
-    
-    local configfile_apps
-    local installed_apps
-    local missing_in_config
-    local missing_in_system
-    
-    # 設定ファイルのアプリ一覧（IDのみ）
-    configfile_apps=($(cat "brewfiles/Masfiles" 2>/dev/null | grep -E '^[0-9]+' | awk '{print $1}' | sort))
-    
-    # 現在インストールされているアプリ一覧（IDのみ）
-    installed_apps=($(mas list 2>/dev/null | awk '{print $1}' | sort))
-    
-    # 現在インストールされているが設定ファイルにないアプリ
-    missing_in_config=($(comm -13 <(printf '%s\n' "${configfile_apps[@]}") <(printf '%s\n' "${installed_apps[@]}")))
-    
-    # 設定ファイルにあるが現在インストールされていないアプリ
-    missing_in_system=($(comm -23 <(printf '%s\n' "${configfile_apps[@]}") <(printf '%s\n' "${installed_apps[@]}")))
-    
-    if [[ ${#missing_in_config[@]} -gt 0 ]]; then
-        echo "    ➕ インストール済みだが設定ファイルにないアプリ:"
-        for app_id in "${missing_in_config[@]}"; do
-            local app_name=$(mas list | grep "^$app_id" | sed 's/^[0-9]* *//' | sed 's/ *(.*)$//')
-            echo "      • $app_name ($app_id)"
-        done
-    fi
-    
-    if [[ ${#missing_in_system[@]} -gt 0 ]]; then
-        echo "    ➖ 設定ファイルにあるがインストールされていないアプリ:"
-        for app_id in "${missing_in_system[@]}"; do
-            local app_name=$(grep "^$app_id" "brewfiles/Masfiles" | sed 's/^[0-9]* *//' | sed 's/ *(.*)$//')
-            echo "      • $app_name ($app_id)"
-        done
-    fi
-    
-    if [[ ${#missing_in_config[@]} -eq 0 && ${#missing_in_system[@]} -eq 0 ]]; then
-        echo "    ✅ 設定ファイルと現在の環境が一致しています"
-    fi
-}
 
-show_brew_diff_only() {
-    echo "🍺 Homebrew パッケージ差分:"
-    
-    if [[ -f "brewfiles/Brewfile" ]]; then
-        echo "  📦 Homebrew formulae:"
-        show_brew_diff
-    else
-        echo "  ⚠️  Brewfile が見つかりません"
-    fi
-    
+    echo "  ➖ Brewfile にあるが未インストール:"
+    brew bundle check --verbose --file="$brewfile" 2>&1 | sed 's/^/    /'
+
     echo ""
-    if [[ -f "brewfiles/Brewfile_cask" ]]; then
-        echo "  🖥️  Homebrew cask:"
-        show_cask_diff
-    else
-        echo "  ⚠️  Brewfile_cask が見つかりません"
+    echo "  ➕ インストール済みだが Brewfile にない (cleanup 候補):"
+    brew bundle cleanup --file="$brewfile" 2>&1 | sed 's/^/    /'
+
+    if mas_enabled; then
+        echo ""
+        echo "  🍎 Mac App Store (Brewfile.mas):"
+        brew bundle check --verbose --file="$masfile" 2>&1 | sed 's/^/    /'
     fi
-    
-    cd "$SCRIPT_DIR"
 }
 
 show_dotfiles_diff() {
-    echo "🏠 dotfiles 差分:"
-    echo "  ℹ️  dotfiles は手動での確認をお勧めします"
-    echo "    設定ファイルの内容は個別に比較する必要があります"
-}
-
-show_develop_diff() {
-    echo "💻 開発設定 差分:"
-    echo "  ℹ️  開発設定は手動での確認をお勧めします"
-    echo "    設定ファイルの内容は個別に比較する必要があります"
+    echo "🏠 dotfiles 差分 (stow dry-run):"
+    if ! command -v stow >/dev/null 2>&1; then
+        echo "  ⚠️  stow が未インストールです（install 実行時に自動導入されます）"
+        return
+    fi
+    # --no: 実際には変更せず、予定アクション/競合のみ表示
+    stow --no --verbose=2 --restow --target="$HOME" --dir="$SCRIPT_DIR" dotfiles 2>&1 | sed 's/^/  /'
 }
 
 # 同期状態確認
@@ -520,73 +214,50 @@ check_status() {
     echo "📊 環境同期状態を確認しています..."
     echo ""
     
-    # dotfiles状態確認
+    # dotfiles状態確認（.config 配下のネストも含めて走査）
     echo "🏠 dotfiles:"
     local dotfiles_synced=0
     local dotfiles_total=0
-    
-    for file in dotfiles/.*; do
-        [[ "$file" == "dotfiles/." || "$file" == "dotfiles/.." ]] && continue
-        [[ -f "$file" ]] || continue
-        
-        ((dotfiles_total++))
-        local basename=$(basename "$file")
-        local target="$HOME/$basename"
-        
-        if [[ -L "$target" ]] && [[ "$(readlink "$target")" == "$SCRIPT_DIR/$file" ]]; then
-            echo "  ✅ $basename"
-            ((dotfiles_synced++))
-        elif [[ -f "$target" ]]; then
-            echo "  ⚠️  $basename (ファイルは存在するがリンクされていません)"
+    local leaf rel target
+
+    while IFS= read -r leaf; do
+        rel="${leaf#"$SCRIPT_DIR"/dotfiles/}"
+        target="$HOME/$rel"
+        dotfiles_total=$((dotfiles_total + 1))
+
+        # -ef: 相対/絶対どちらの symlink でも同一実体かを inode で判定
+        if [[ -L "$target" ]] && [[ "$target" -ef "$leaf" ]]; then
+            echo "  ✅ $rel"
+            dotfiles_synced=$((dotfiles_synced + 1))
+        elif [[ -e "$target" || -L "$target" ]]; then
+            echo "  ⚠️  $rel (存在するが repo を指していません)"
         else
-            echo "  ❌ $basename (未インストール)"
+            echo "  ❌ $rel (未インストール)"
         fi
-    done
-    
+    done < <(find "$SCRIPT_DIR/dotfiles" -type f)
+
     echo "     同期率: $dotfiles_synced/$dotfiles_total"
     echo ""
     
     # brewfiles状態確認
     echo "🍺 brewfiles:"
     if [[ -f "brewfiles/Brewfile" ]]; then
-        local brew_count=$(wc -l < "brewfiles/Brewfile" | tr -d ' ')
+        local brew_count cask_count mas_count=0
+        brew_count=$(grep -c '^brew ' "brewfiles/Brewfile" || true)
+        cask_count=$(grep -c '^cask ' "brewfiles/Brewfile" || true)
+        [[ -f "brewfiles/Brewfile.mas" ]] && mas_count=$(grep -c '^mas ' "brewfiles/Brewfile.mas" || true)
         echo "  📦 Homebrew formulae: $brew_count 個"
-    fi
-    
-    if [[ -f "brewfiles/Brewfile_cask" ]]; then
-        local cask_count=$(wc -l < "brewfiles/Brewfile_cask" | tr -d ' ')
         echo "  🖥️  Homebrew cask: $cask_count 個"
+        echo "  🍎 Mac App Store: $mas_count 個 (Brewfile.mas, 既定スキップ)"
+    else
+        echo "  ⚠️  Brewfile が見つかりません"
     fi
-    
-    if [[ -f "brewfiles/Masfiles" ]]; then
-        local mas_count=$(wc -l < "brewfiles/Masfiles" | tr -d ' ')
-        echo "  🍎 Mac App Store: $mas_count 個"
-    fi
-    
+
     echo ""
-    
-    # develop状態確認
-    # echo "💻 develop:"
-    # if [[ -d "develop" ]]; then
-    #     local dev_count=$(find develop -type f | wc -l | tr -d ' ')
-    #     echo "  📄 設定ファイル: $dev_count 個"
-    #     
-    #     for file in develop/*; do
-    #         [[ -f "$file" ]] || continue
-    #         local basename=$(basename "$file")
-    #         if [[ -f "$HOME/$basename" ]]; then
-    #             echo "  ✅ $basename"
-    #         else
-    #             echo "  ❌ $basename (未インストール)"
-    #         fi
-    #     done
-    # else
-    #     echo "  ⚠️  developディレクトリが見つかりません"
-    # fi
 }
 
 # メイン処理
-ACTION="${1:-generate}"
+ACTION="${1:-help}"
 TARGET="${2:-all}"
 
 case "$ACTION" in
@@ -596,44 +267,39 @@ case "$ACTION" in
                 manage_dotfiles generate
                 echo ""
                 manage_brew generate
-                echo ""
-                manage_develop generate
                 ;;
             "dotfiles") manage_dotfiles generate ;;
             "brew") manage_brew generate ;;
-            "develop") manage_develop generate ;;
             *) show_usage ;;
         esac
         ;;
-        
+
     "install")
         case "$TARGET" in
             "all")
                 manage_brew install
                 echo ""
                 manage_dotfiles install
-                echo ""
-                manage_develop install
                 ;;
             "dotfiles") manage_dotfiles install ;;
             "brew") manage_brew install ;;
-            "develop") manage_develop install ;;
             *) show_usage ;;
         esac
         ;;
-        
+
     "status")
         check_status
         ;;
-        
+
     "diff")
         case "$TARGET" in
             "all")
-                show_diff
+                show_dotfiles_diff
+                echo ""
+                show_brew_diff
                 ;;
             "dotfiles") show_dotfiles_diff ;;
-            "brew") show_brew_diff_only ;;
-            "develop") show_develop_diff ;;
+            "brew") show_brew_diff ;;
             *) show_usage ;;
         esac
         ;;

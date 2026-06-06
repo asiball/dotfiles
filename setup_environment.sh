@@ -111,6 +111,8 @@ manage_dotfiles() {
             echo "  ✅ dotfiles をリンクしました"
 
             ensure_gitconfig_local
+            ensure_fisher
+            ensure_fish_default_shell
             ;;
     esac
 }
@@ -130,6 +132,38 @@ ensure_gitconfig_local() {
 	email = $git_email
 EOF
     echo "  ✅ ~/.gitconfig.local を作成しました"
+}
+
+# fisher プラグインを一括インストールする
+ensure_fisher() {
+    # fisher は fish 関数として提供されるため fish 経由で存在確認する
+    if ! command -v fish >/dev/null 2>&1 || ! fish -c "functions -q fisher" >/dev/null 2>&1; then
+        echo "  ⚠️  fisher が未インストールのためスキップします"
+        return
+    fi
+    echo "  🐟 fisher プラグインをインストールしています..."
+    fish -c "fisher install < ~/.config/fish/fish_plugins"
+    echo "  ✅ fisher プラグインをインストールしました"
+}
+
+# デフォルトシェルを fish に変更する（/etc/shells への登録も含む）
+ensure_fish_default_shell() {
+    local fish_path
+    fish_path="$(command -v fish 2>/dev/null)"
+    if [[ -z "$fish_path" ]]; then
+        echo "  ⚠️  fish が未インストールのためスキップします"
+        return
+    fi
+    if dscl . -read ~/ UserShell 2>/dev/null | grep -qF "$fish_path"; then
+        echo "  ✅ デフォルトシェルはすでに fish です"
+        return
+    fi
+    if ! grep -qF "$fish_path" /etc/shells; then
+        echo "  📝 /etc/shells に $fish_path を追加します（sudo が必要です）"
+        echo "$fish_path" | sudo tee -a /etc/shells >/dev/null
+    fi
+    chsh -s "$fish_path"
+    echo "  ✅ デフォルトシェルを fish に変更しました（再ログインで有効）"
 }
 
 # Homebrew 本体を用意する（クリーンmacOS対応）

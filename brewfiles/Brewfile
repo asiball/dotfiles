@@ -1,15 +1,8 @@
-fastfetch
-fd
-fish
-gh
-git
-htop
-jj
-lazygit
-mas
-neovim
-node
-peco
-pipx
-pnpm
-tree
+brew "fish"
+brew "git"
+brew "mas"
+brew "neovim"
+brew "node@22", link: true
+brew "python@3.14"
+brew "stow"
+cask "orbstack"

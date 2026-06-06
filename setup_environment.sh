@@ -102,8 +102,27 @@ manage_dotfiles() {
             # シンボリックリンクを stow で作成（既存リンクは張り直す）
             stow --restow --target="$HOME" --dir="$SCRIPT_DIR" dotfiles
             echo "  ✅ dotfiles をリンクしました"
+
+            ensure_gitconfig_local
             ;;
     esac
+}
+
+# ~/.gitconfig.local が無ければ [user] の入力を促して作成する
+ensure_gitconfig_local() {
+    local local_cfg="$HOME/.gitconfig.local"
+    [[ -f "$local_cfg" ]] && return 0
+
+    echo "  📝 ~/.gitconfig.local が見つかりません。git ユーザー情報を入力してください。"
+    read -rp "     name  : " git_name
+    read -rp "     email : " git_email
+
+    cat > "$local_cfg" <<EOF
+[user]
+	name = $git_name
+	email = $git_email
+EOF
+    echo "  ✅ ~/.gitconfig.local を作成しました"
 }
 
 # Homebrew 本体を用意する（クリーンmacOS対応）

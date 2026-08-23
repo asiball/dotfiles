@@ -4,7 +4,7 @@
 # setup.sh は対話入力を含むため、curl | bash ではなく上の形式で実行する(stdin を端末に残す)
 set -eu
 
-REPO="https://github.com/asiball/dotfiles.git"
+REPO="${REPO:-https://github.com/asiball/dotfiles.git}"
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
 
 case "$(uname -s)" in

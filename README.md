@@ -30,6 +30,12 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/asiball/dotfiles/main/in
 ./setup.sh dump            # (macOS) 実環境を Brewfile に書き出す
 ```
 
+## テスト
+
+```bash
+test/run.sh   # Docker のクリーンな Ubuntu で install.sh を 2 回流し、更新と冪等性を確認する(コミット済みの HEAD が対象)
+```
+
 ## 方針
 
 - OS ごとにファイルを分けず、1 ファイル内で `command -v` / `test -f` で切り替える。

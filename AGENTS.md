@@ -49,5 +49,5 @@ macOS / Linux(Ubuntu, WSL2)共通の dotfiles リポジトリ。**シンプル�
 
 ## スコープ
 
-- 管理対象は `home/`(stow)、`Brewfile*`、`apt-packages.txt`、`setup.sh`、`install.sh`。
+- 管理対象は `home/`(stow)、`Brewfile*`、`apt-packages.txt`、`setup.sh`、`install.sh`。`test/` は Docker でクリーンな Ubuntu の install と 2 回目の冪等性を確認する(`test/run.sh`)。setup.sh / install.sh を変えたら通す。
 - Claude Code 関連は `home/.claude/`(keybindings.json、statusline.sh、hooks/)で管理する。`~/.claude/CLAUDE.md` や skills は内容が固まるまで入れない。`~/.claude/settings.json` は環境依存値や機密を含むため管理せず、共有したい項目は `home/.claude/settings.shared.json` に書いて `setup.sh` が jq で合成する。

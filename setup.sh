@@ -164,7 +164,7 @@ status_dotfiles() {
     while IFS= read -r rel; do
         target="$HOME/$rel"
         total=$((total + 1))
-        if [[ -L "$target" && "$target" -ef "home/$rel" ]]; then
+        if [[ -e "$target" && "$target" -ef "home/$rel" ]]; then   # 親ディレクトリごと symlink された場合も同一実体なら OK
             echo "  OK   $rel"; ok=$((ok + 1))
         elif [[ -e "$target" || -L "$target" ]]; then
             echo "  WARN $rel (存在するが repo を指していない)"

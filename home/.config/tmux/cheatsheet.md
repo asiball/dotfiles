@@ -21,6 +21,7 @@
 
 ## セッション
   tmux-claude [dir]        Claude Code 用ワークスペース(左 claude / 右シェル)を起動/再接続
+  tmux-claude -l 3 [dir]   縦長 3 列(左 claude、他はシェル)
   tmux-claude -l 4 [dir]   2x2 レイアウト(左上 claude、他はシェル)
   tmux-claude -c [dir]     前回の会話を再開(claude --continue)
   tmux-claude [dir] -- -w feature-x    以降の引数は claude へ(worktree で起動 等)

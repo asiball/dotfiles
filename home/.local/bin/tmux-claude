@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Claude Code 用の tmux ワークスペースを起動する(既にあれば再接続)
 #
-#   tmux-claude [-l 2|4] [-c] [dir] [-- claude の引数...]
+#   tmux-claude [-l 2|3|4] [-c] [dir] [-- claude の引数...]
 #     dir   省略時はカレントディレクトリ。セッション名はディレクトリ名
 #     -l 2  左 claude(65%) / 右シェル            (既定)
+#     -l 3  縦長 3 列。左 claude、中央・右はシェル
 #     -l 4  2x2。左上 claude、他 3 つはシェル
 #     -c    claude --continue で前回の会話を再開
 #     --    以降は claude にそのまま渡す(例: -- -w feature-x、-- --resume 名前)
@@ -27,7 +28,7 @@ while getopts 'l:cLkh' opt; do
     esac
 done
 shift $((OPTIND - 1))
-case "$layout" in 2|4) ;; *) echo "レイアウトは 2 か 4 を指定してください" >&2; usage 1 ;; esac
+case "$layout" in 2|3|4) ;; *) echo "レイアウトは 2 / 3 / 4 のいずれかを指定してください" >&2; usage 1 ;; esac
 
 if [ "$action" = list ]; then
     tmux ls -F '#{session_name}  #{session_windows}w  #{?session_attached,attached,-}  #{session_path}' 2>/dev/null || echo "セッションはありません"
@@ -53,6 +54,10 @@ if ! tmux has-session -t "=$name" 2>/dev/null; then
         tmux split-window -v -t "$name:claude.1" -c "$dir"
         tmux split-window -v -t "$name:claude.3" -c "$dir"
         tmux select-layout -t "$name:claude" tiled
+    elif [ "$layout" = 3 ]; then
+        tmux split-window -h -t "$name:claude" -c "$dir"
+        tmux split-window -h -t "$name:claude" -c "$dir"
+        tmux select-layout -t "$name:claude" even-horizontal
     else
         tmux split-window -h -l 35% -t "$name:claude" -c "$dir"
     fi

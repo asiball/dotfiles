@@ -67,8 +67,9 @@ MAS=1 ./setup.sh install   # Mac App Store アプリも含める(要サインイ
 
 `~/.config/tmux/tmux.conf` は macOS / WSL2 共通。prefix は `Ctrl+S`。
 
-- `tmux-claude [-l 2|4] [dir]`: Claude Code 用のワークスペースを起動する。既にあれば再接続する。
+- `tmux-claude [-l 2|3|4] [dir]`: Claude Code 用のワークスペースを起動する。既にあれば再接続する。
   - `-l 2`(既定): 左 claude、右シェル
+  - `-l 3`: 縦長 3 列(左 claude、中央・右はシェル)
   - `-l 4`: 2x2(左上 claude、他 3 つはシェル)
   - どちらも別ウィンドウ `shell` を作る
 - `tmux-claude -c` は `claude --continue` で前回の会話を再開、`-- <引数>` は claude にそのまま渡す(`-- -w feature-x` で worktree、`-- --resume 名前`)。`-L` で一覧、`-k [dir]` で終了。

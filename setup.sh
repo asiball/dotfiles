@@ -22,6 +22,24 @@ packages は macOS では brew bundle、Linux(Ubuntu/WSL2)では apt-packages.tx
 USAGE
 }
 
+# 実行前に、導入されるもの・変更されるものを列挙して確認を取る
+confirm_install() {
+    echo "これから行うこと($1):"
+    if [[ "$1" != dotfiles ]]; then
+        case "$OS" in
+            Darwin) echo "  - Homebrew(無ければ導入)+ brew bundle: Brewfile$(mas_enabled && echo ', Brewfile.mas')" ;;
+            Linux)  echo "  - apt で導入: $(apt_packages)" ;;
+        esac
+    fi
+    if [[ "$1" != packages ]]; then
+        echo "  - stow(無ければ導入)で home/ を \$HOME に展開。衝突する既存ファイルは *.backup.<時刻> に退避"
+        echo "  - ~/.gitconfig.local が無ければ作成、Claude Code hooks を ~/.claude/settings.json に合成(jq)"
+        echo "  - fish があれば fisher とプラグインを導入$([[ "$OS" == Darwin ]] && echo '、既定シェルを fish に変更')"
+    fi
+    read -rp "続行しますか? [y/N] " ans
+    [[ "$ans" =~ ^[Yy]$ ]] || { echo "中止しました"; exit 1; }
+}
+
 # ---------- packages ----------
 ensure_homebrew() {
     command -v brew >/dev/null && return 0
@@ -196,9 +214,9 @@ status_dotfiles() {
 cmd="${1:-help}"
 target="${2:-all}"
 case "$cmd:$target" in
-    install:all)      install_packages; echo; install_dotfiles ;;
-    install:dotfiles) install_dotfiles ;;
-    install:packages) install_packages ;;
+    install:all)      confirm_install all; install_packages; echo; install_dotfiles ;;
+    install:dotfiles) confirm_install dotfiles; install_dotfiles ;;
+    install:packages) confirm_install packages; install_packages ;;
     status:*)         status_dotfiles ;;
     diff:all)         diff_dotfiles; echo; diff_packages ;;
     diff:dotfiles)    diff_dotfiles ;;

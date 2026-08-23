@@ -36,7 +36,7 @@ confirm_install() {
         echo "  - ~/.gitconfig.local が無ければ作成、Claude Code の共有設定(hooks, statusLine)を ~/.claude/settings.json に合成(jq)"
         echo "  - fish があれば fisher とプラグインを導入$([[ "$OS" == Darwin ]] && echo '、既定シェルを fish に変更')"
     fi
-    read -rp "続行しますか? [y/N] " ans
+    read -rp "続行しますか? [y/N] " ans || true   # stdin が端末でなく EOF のときも下で中止扱いにする
     [[ "$ans" =~ ^[Yy]$ ]] || { echo "中止しました"; exit 1; }
 }
 

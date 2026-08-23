@@ -22,19 +22,19 @@ packages は macOS では brew bundle、Linux(Ubuntu/WSL2)では apt-packages.tx
 USAGE
 }
 
-# 実行前に、導入されるもの・変更されるものを列挙して確認を取る
+# 実行前に、インストールされるもの・変更されるものを列挙して確認を取る
 confirm_install() {
     echo "これから行うこと($1):"
     if [[ "$1" != dotfiles ]]; then
         case "$OS" in
-            Darwin) echo "  - Homebrew(無ければ導入)+ brew bundle: Brewfile$(mas_enabled && echo ', Brewfile.mas')" ;;
-            Linux)  echo "  - apt で導入: $(apt_packages)" ;;
+            Darwin) echo "  - Homebrew+ brew bundle: Brewfile$(mas_enabled && echo ', Brewfile.mas')" ;;
+            Linux)  echo "  - apt でインストール: $(apt_packages)" ;;
         esac
     fi
     if [[ "$1" != packages ]]; then
-        echo "  - stow(無ければ導入)で home/ を \$HOME に展開。衝突する既存ファイル・symlink は *.backup.<時刻> に退避"
+        echo "  - stowで home/ を \$HOME に展開。衝突する既存ファイル・symlink は *.backup.<時刻> に退避"
         echo "  - ~/.gitconfig.local が無ければ作成、Claude Code の共有設定(hooks, statusLine)を ~/.claude/settings.json に合成(jq)"
-        echo "  - fish があれば fisher とプラグインを導入$([[ "$OS" == Darwin ]] && echo '、既定シェルを fish に変更')"
+        echo "  - fish があれば fisher とプラグインをインストール$([[ "$OS" == Darwin ]] && echo '、既定シェルを fish に変更')"
     fi
     read -rp "続行しますか? [y/N] " ans || true   # stdin が端末でなく EOF のときも下で中止扱いにする
     [[ "$ans" =~ ^[Yy]$ ]] || { echo "中止しました"; exit 1; }
@@ -43,7 +43,7 @@ confirm_install() {
 # ---------- packages ----------
 ensure_homebrew() {
     command -v brew >/dev/null && return 0
-    echo "Homebrew を導入します..."
+    echo "Homebrew をインストールします..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     if [[ -x /opt/homebrew/bin/brew ]]; then eval "$(/opt/homebrew/bin/brew shellenv)"; fi
     if [[ -x /usr/local/bin/brew ]]; then eval "$(/usr/local/bin/brew shellenv)"; fi
@@ -102,7 +102,7 @@ diff_packages() {
 # ---------- dotfiles ----------
 ensure_stow() {
     command -v stow >/dev/null && return 0
-    echo "GNU stow を導入します..."
+    echo "GNU stow をインストールします..."
     case "$OS" in
         Darwin) ensure_homebrew; brew install stow ;;
         Linux)  apt_install stow ;;
@@ -163,7 +163,7 @@ ensure_gitconfig_local() {
     echo "~/.gitconfig.local を作成しました"
 }
 
-# fisher と fish_plugins のプラグインを導入する(fish が無ければ何もしない)
+# fisher と fish_plugins のプラグインをインストールする(fish が無ければ何もしない)
 ensure_fish_plugins() {
     command -v fish >/dev/null || return 0
     if ! fish -c 'functions -q fisher'; then
@@ -186,7 +186,7 @@ ensure_fish_default_shell() {
 
 diff_dotfiles() {
     if ! command -v stow >/dev/null; then
-        echo "stow が未導入です(install 時に自動導入されます)"; return 0
+        echo "stow が未インストールです(install 時に自動インストールされます)"; return 0
     fi
     echo "## dotfiles 展開予定(stow dry-run)"
     stow --no --verbose=2 --no-folding --restow --target="$HOME" home 2>&1 | sed 's/^/  /'
@@ -209,13 +209,15 @@ status_dotfiles() {
     echo "  同期: $ok/$total"
 }
 
+finish() { echo; echo "==== セットアップ完了 ===="; status_dotfiles | tail -1; }
+
 # ---------- main ----------
 cmd="${1:-help}"
 target="${2:-all}"
 case "$cmd:$target" in
-    install:all)      confirm_install all; install_packages; echo; install_dotfiles ;;
-    install:dotfiles) confirm_install dotfiles; install_dotfiles ;;
-    install:packages) confirm_install packages; install_packages ;;
+    install:all)      confirm_install all; install_packages; echo; install_dotfiles; finish ;;
+    install:dotfiles) confirm_install dotfiles; install_dotfiles; finish ;;
+    install:packages) confirm_install packages; install_packages; finish ;;
     status:*)         status_dotfiles ;;
     diff:all)         diff_dotfiles; echo; diff_packages ;;
     diff:dotfiles)    diff_dotfiles ;;

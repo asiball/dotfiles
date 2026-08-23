@@ -21,8 +21,8 @@ macOS と Linux(Ubuntu / WSL2)共通の設定ファイルと、それを展開�
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/asiball/dotfiles/main/install.sh)"
 ```
 
-`~/dotfiles` に clone して `setup.sh install all` を実行する。何を導入・変更するかを表示し、確認してから進む。
-clone 済みなら `./setup.sh install all`(パッケージ + dotfiles)または `./setup.sh install dotfiles`。
+`~/dotfiles` に clone(clone 済みなら `git pull --ff-only`)して `setup.sh install all` を実行する。何を導入・変更するかを表示し、確認してから進む。更新も同じコマンドでよい。
+手動なら `git -C ~/dotfiles pull && ~/dotfiles/setup.sh install all`(パッケージ + dotfiles)または `install dotfiles`。brew / apt は追加分の導入のみで、既存パッケージの更新はしない。
 
 ```bash
 ./setup.sh status          # 各ファイルが repo を指しているか

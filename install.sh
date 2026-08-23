@@ -27,7 +27,8 @@ case "$(uname -s)" in
 esac
 
 if [[ -d "$DOTFILES" ]]; then
-    echo "$DOTFILES は既にあります(clone をスキップ)"
+    echo "$DOTFILES は既にあります。更新します(git pull --ff-only)"
+    git -C "$DOTFILES" pull --ff-only
 else
     git clone "$REPO" "$DOTFILES"
 fi

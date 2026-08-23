@@ -67,7 +67,10 @@ MAS=1 ./setup.sh install   # Mac App Store アプリも含める(要サインイ
 
 `~/.config/tmux/tmux.conf` は macOS / WSL2 共通。prefix は `Ctrl+S`。
 
-- `tmux-claude [dir]`: Claude Code 用のワークスペース(左 claude、右シェル、別ウィンドウにシェル)を起動する。既にあれば再接続する。
+- `tmux-claude [-l 2|4] [dir]`: Claude Code 用のワークスペースを起動する。既にあれば再接続する。
+  - `-l 2`(既定): 左 claude、右シェル
+  - `-l 4`: 2x2(左上 claude、他 3 つはシェル)
+  - どちらも別ウィンドウ `shell` を作る
 - `prefix + /` でチートシート、`prefix + ?` で全キー一覧。
 - Claude Code 側の設定
   - `~/.claude/keybindings.json`(stow で展開): `Ctrl+S`(stash)を無効化し tmux の prefix と衝突しないようにする。Claude Code に `Ctrl+S` を送るときは prefix を 2 回押す。

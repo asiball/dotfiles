@@ -20,7 +20,8 @@
   prefix w      一覧から選ぶ         prefix &      ウィンドウを閉じる
 
 ## セッション
-  tmux-claude [dir]   Claude Code 用ワークスペースを起動/再接続
+  tmux-claude [dir]        Claude Code 用ワークスペース(左 claude / 右シェル)を起動/再接続
+  tmux-claude -l 4 [dir]   2x2 レイアウト(左上 claude、他はシェル)
   tmux ls             一覧           tmux a -t 名前   接続
   prefix s            セッション切替  prefix $         名前変更
 

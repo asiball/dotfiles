@@ -1,19 +1,40 @@
 #!/usr/bin/env bash
 # Claude Code 用の tmux ワークスペースを起動する(既にあれば再接続)
 #
-#   tmux-claude [dir]     dir 省略時はカレントディレクトリ。セッション名はディレクトリ名
-#
-# レイアウト
-#   window "claude": 左に claude(65%)、右にシェル
-#   window "shell" : 作業用シェル
+#   tmux-claude [-l 2|4] [dir]
+#     dir   省略時はカレントディレクトリ。セッション名はディレクトリ名
+#     -l 2  左 claude(65%) / 右シェル            (既定)
+#     -l 4  2x2。左上 claude、他 3 つはシェル
+#   どちらも window "shell"(作業用シェル)を別に作る。
+#   既存セッションに再接続するときはレイアウト指定は無視される。
 set -eu
+
+usage() { sed -n '2,9p' "$0"; exit "${1:-0}"; }
+
+layout=2
+while getopts 'l:h' opt; do
+    case "$opt" in
+        l) layout="$OPTARG" ;;
+        h) usage ;;
+        *) usage 1 ;;
+    esac
+done
+shift $((OPTIND - 1))
+case "$layout" in 2|4) ;; *) echo "レイアウトは 2 か 4 を指定してください" >&2; usage 1 ;; esac
 
 dir="$(cd "${1:-.}" && pwd)"
 name="$(basename "$dir" | sed 's/[^A-Za-z0-9_-]/_/g')"   # セッション名に使えない . : を置換
 
 if ! tmux has-session -t "=$name" 2>/dev/null; then
     tmux new-session -d -s "$name" -c "$dir" -n claude
-    tmux split-window -h -l 35% -t "$name:claude" -c "$dir"
+    if [ "$layout" = 4 ]; then
+        tmux split-window -h -t "$name:claude" -c "$dir"
+        tmux split-window -v -t "$name:claude.1" -c "$dir"
+        tmux split-window -v -t "$name:claude.3" -c "$dir"
+        tmux select-layout -t "$name:claude" tiled
+    else
+        tmux split-window -h -l 35% -t "$name:claude" -c "$dir"
+    fi
     tmux new-window -d -t "$name" -n shell -c "$dir"
     tmux send-keys -t "$name:claude.1" 'claude' C-m
     tmux select-pane -t "$name:claude.1"

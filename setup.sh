@@ -52,7 +52,7 @@ ensure_homebrew() {
 mas_enabled() { [[ "${MAS:-}" == 1 ]] && command -v mas >/dev/null; }
 
 apt_packages() { grep -v '^#' apt-packages.txt | xargs; }
-apt_install()  { sudo apt-get update && sudo apt-get install -y "$@"; }
+apt_install()  { sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$@"; }   # tzdata 等の debconf 対話を出さない
 
 install_packages() {
     case "$OS" in

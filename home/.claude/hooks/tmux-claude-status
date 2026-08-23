@@ -2,7 +2,7 @@
 # Claude Code の hooks から呼ばれ、Claude の状態を tmux のペイン/ウィンドウに記録する
 #   tmux-claude-status <working|waiting|done|clear>
 # 状態は @claude_status(pane と window のオプション)に入り、tmux.conf の表示で使う。
-# hooks の配線は同じディレクトリの tmux-claude-status.hooks.json(setup.sh が settings.json に合成する)
+# hooks の配線は ~/.claude/settings.shared.json(setup.sh が settings.json に合成する)
 cat >/dev/null                       # stdin の JSON は使わない
 [ -n "${TMUX_PANE:-}" ] || exit 0     # tmux の外では何もしない
 command -v tmux >/dev/null || exit 0

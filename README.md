@@ -40,7 +40,7 @@ clone 済みなら `./setup.sh install all`(パッケージ + dotfiles)または
 
 - tmux の prefix は `Ctrl+S`。キー一覧は `prefix + /`(チートシート)。
 - `tmux-claude [dir]` で Claude Code 用のワークスペースを起動(再実行で再接続)。オプションは `tmux-claude -h`。
-- Claude Code の hooks がウィンドウ名に状態(作業中 / 入力待ち / 完了)を付ける。配線は `setup.sh install` が `~/.claude/settings.json` に合成する(jq が必要)。
-- `~/.claude/keybindings.json` で Claude Code の `Ctrl+S` を無効化している。Claude Code に `Ctrl+S` を送るときは prefix を 2 回押す。
-- agent team を tmux ペインに分けるには `~/.claude/settings.json` に `"teammateMode": "tmux"` を入れる(settings.json は repo 管理外)。
+- Claude Code の hooks がウィンドウ名に状態(作業中 / 入力待ち / 完了)を付ける。
+- `home/.claude/` で管理するもの: `keybindings.json`(`Ctrl+S` を無効化。Claude Code に送るときは prefix を 2 回押す)、`statusline.sh`、`hooks/`。
+- `~/.claude/settings.json` は環境依存値を含むため repo 管理外。共有したい項目(hooks、statusLine)は `settings.shared.json` に置き、`setup.sh install` が jq で合成する。agent team を tmux ペインに分ける `"teammateMode": "tmux"` は settings.json に直接入れる。
 - Windows Terminal から常に tmux で始めるには、Ubuntu プロファイルのコマンドラインを `wsl.exe -d Ubuntu --cd ~ tmux new -A -s main` にする。

@@ -33,7 +33,7 @@ confirm_install() {
     fi
     if [[ "$1" != packages ]]; then
         echo "  - stow(無ければ導入)で home/ を \$HOME に展開。衝突する既存ファイルは *.backup.<時刻> に退避"
-        echo "  - ~/.gitconfig.local が無ければ作成、Claude Code hooks を ~/.claude/settings.json に合成(jq)"
+        echo "  - ~/.gitconfig.local が無ければ作成、Claude Code の共有設定(hooks, statusLine)を ~/.claude/settings.json に合成(jq)"
         echo "  - fish があれば fisher とプラグインを導入$([[ "$OS" == Darwin ]] && echo '、既定シェルを fish に変更')"
     fi
     read -rp "続行しますか? [y/N] " ans
@@ -134,24 +134,24 @@ install_dotfiles() {
     fi
 
     ensure_gitconfig_local
-    ensure_claude_hooks
+    ensure_claude_settings
     ensure_fish_plugins
     ensure_fish_default_shell
 }
 
-# Claude Code の hooks(tmux 状態表示)を ~/.claude/settings.json に合成する。settings.json 自体は repo 管理外
-ensure_claude_hooks() {
-    local settings="$HOME/.claude/settings.json" frag="$HOME/.claude/hooks/tmux-claude-status.hooks.json"
+# home/.claude/settings.shared.json(hooks, statusLine など)を ~/.claude/settings.json に合成する。
+# settings.json 自体は環境依存値や機密を含むため repo 管理外。shared 側の項目で上書きし、それ以外は保持する
+ensure_claude_settings() {
+    local settings="$HOME/.claude/settings.json" shared="$HOME/.claude/settings.shared.json" merged
     if ! command -v jq >/dev/null; then
-        echo "jq が無いため Claude Code hooks の合成をスキップしました(手動: jq -s '.[0] * .[1]' settings.json $frag)"
+        echo "jq が無いため Claude Code 設定の合成をスキップしました(手動: jq -s '.[0] * .[1]' settings.json $shared)"
         return 0
     fi
     [[ -f "$settings" ]] || echo '{}' > "$settings"
-    if [[ "$(jq -r '.hooks.Stop // empty | tostring' "$settings")" == *tmux-claude-status* ]]; then
-        return 0
-    fi
-    jq -s '.[0] * .[1]' "$settings" "$frag" > "$settings.tmp" && mv "$settings.tmp" "$settings"
-    echo "~/.claude/settings.json に tmux 用 hooks を追加しました"
+    merged="$(jq -s '.[0] * .[1]' "$settings" "$shared")"
+    [[ "$merged" == "$(jq . "$settings")" ]] && return 0
+    printf '%s\n' "$merged" > "$settings"
+    echo "~/.claude/settings.json に settings.shared.json を合成しました"
 }
 
 # マシン固有の git ユーザー情報(~/.gitconfig から include される)

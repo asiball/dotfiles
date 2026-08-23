@@ -1,3 +1,4 @@
+brew "bash"
 brew "fish"
 brew "fisher"
 brew "gh"

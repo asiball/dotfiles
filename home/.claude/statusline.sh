@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # -------------------------------------------------------------------------
 # Claude Code CLI Status Line
 #
@@ -21,6 +21,7 @@ BAR_FULL='▰'
 BAR_EMPTY='▱'
 
 input=$(cat)
+timeout_cmd=""; command -v timeout >/dev/null && timeout_cmd="timeout 1s"   # macOS 標準には GNU timeout が無い
 
 # ---- 🎨 ------------------------------------------------------------------
 R=$'\033[0m'; DIM=$'\033[90m'; B=$'\033[1m'; C_LBL=$'\033[37m'
@@ -65,18 +66,6 @@ if   [ "$cols" -ge 100 ]; then bw_ctx=12; bw_lim=8; compact=0
 elif [ "$cols" -ge 76  ]; then bw_ctx=10; bw_lim=6; compact=0
 else                           bw_ctx=8;  bw_lim=0; compact=1
 fi
-
-# ---- 使用量の書き出し(エージェントから参照するため) ----------------------------
-# statusline の JSON はこのスクリプトの stdin にしか渡らず、ディスクにも残らない。
-# そのためエージェント側から 5h/7d の残量を知る手段が無い。refreshInterval ごとに
-# ここで書き出しておき、usage-gate.sh から読めるようにする。
-# 一時ファイル + mv で原子的に置き換える(読み手が中途半端な内容を見ないように)。
-# if [ "${rl5:--1}" -ge 0 ] 2>/dev/null; then
-#   _usage_out=$HOME/.claude/usage.json
-#   printf '{"five_hour":{"used_percentage":%s,"resets_at":%s},"seven_day":{"used_percentage":%s,"resets_at":%s},"written_at":%s}\n' \
-#     "$rl5" "${rl5_at:-0}" "${rl7:--1}" "${rl7_at:-0}" "$(printf '%(%s)T' -1)" \
-#     > "$_usage_out.tmp" 2>/dev/null && mv -f "$_usage_out.tmp" "$_usage_out" 2>/dev/null
-# fi
 
 # ---- ヘルパ --------------------------------------------------------------------
 # BAR にプログレスバーを組み立てる: mkbar <pct> <width>
@@ -135,7 +124,7 @@ l1+=("${C_DIR}${disp}${R}")
 
 # ---- git ------------------------------------------------------------------
 if [ "$SHOW_GIT" = 1 ] &&
-   gs=$(timeout 1s git --no-optional-locks -C "$cwd" status --porcelain=v2 --branch 2>/dev/null); then
+   gs=$($timeout_cmd git --no-optional-locks -C "$cwd" status --porcelain=v2 --branch 2>/dev/null); then
   read -r br ahead behind staged modif untrk confl <<< "$(
     awk '
       /^# branch\.head /{b=$3}
@@ -160,7 +149,7 @@ if [ "$SHOW_GIT" = 1 ] &&
   # HEAD との差分行数。追跡ファイルに変更が無ければ diff を呼ぶまでもない。
   if [ "$SHOW_GIT_DIFF" = 1 ] && [ $(( staged + modif )) -gt 0 ]; then
     read -r add del <<< "$(
-      timeout 1s git --no-optional-locks -C "$cwd" diff HEAD --numstat 2>/dev/null |
+      $timeout_cmd git --no-optional-locks -C "$cwd" diff HEAD --numstat 2>/dev/null |
         awk '{a+=$1; d+=$2} END{print a+0, d+0}'
     )"
     [ "${add:-0}" -gt 0 ] || [ "${del:-0}" -gt 0 ] &&

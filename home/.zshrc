@@ -63,7 +63,7 @@ alias tree='tree -NC'
 alias du='du -sh *'
 alias tm='terminal'
 alias rm='rm -i'
-alias pwdc="pwd| tr -d '\n' | pbcopy"
+alias pwdc="pwd | tr -d '\n' | clipcopy"
 
 alias cronlist='crontab -l'
 alias croncron='crontab ~/.cron.conf;echo -- cron reload! -- ; cronlist'
@@ -78,7 +78,5 @@ alias cd="cdls"
 ### }}}
 
 
-## PATH
-export PATH="$PATH:$HOME/Local/mycommand"
+## PATH(~/.local/bin は .bashrc で追加済み。マシン固有のものは ~/.bashrc.local へ)
 export PATH="/usr/local/sbin:$PATH"
-export PATH="$PATH:$HOME/.local/bin"

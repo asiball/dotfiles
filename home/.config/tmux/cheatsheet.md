@@ -22,6 +22,9 @@
 ## セッション
   tmux-claude [dir]        Claude Code 用ワークスペース(左 claude / 右シェル)を起動/再接続
   tmux-claude -l 4 [dir]   2x2 レイアウト(左上 claude、他はシェル)
+  tmux-claude -c [dir]     前回の会話を再開(claude --continue)
+  tmux-claude [dir] -- -w feature-x    以降の引数は claude へ(worktree で起動 等)
+  tmux-claude -L / -k [dir]            一覧 / 終了
   tmux ls             一覧           tmux a -t 名前   接続
   prefix s            セッション切替  prefix $         名前変更
 
@@ -29,6 +32,10 @@
   prefix [      コピーモード(vi)。v で選択開始、y でクリップボードへ、q で抜ける
   マウスでドラッグ選択 → 離した時点でクリップボードへ
   (Claude Code のペイン内はアプリがマウスを扱う。Ctrl+Shift+C でコピー)
+
+## 状態表示
+  ウィンドウ名の 🤖 作業中 / 💬 入力待ち / ✅ 完了(Claude Code hooks が更新)
+  ベルが鳴ったウィンドウはオレンジで強調。ペイン枠に「番号: コマンド [状態]」
 
 ## Claude Code
   Ctrl+S は tmux が取る。Claude Code に Ctrl+S を送るときは prefix prefix(2 回押し)

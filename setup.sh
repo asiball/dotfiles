@@ -115,8 +115,24 @@ install_dotfiles() {
     fi
 
     ensure_gitconfig_local
+    ensure_claude_hooks
     ensure_fish_plugins
     ensure_fish_default_shell
+}
+
+# Claude Code の hooks(tmux 状態表示)を ~/.claude/settings.json に合成する。settings.json 自体は repo 管理外
+ensure_claude_hooks() {
+    local settings="$HOME/.claude/settings.json" frag="$HOME/.claude/hooks/tmux-claude-status.hooks.json"
+    if ! command -v jq >/dev/null; then
+        echo "jq が無いため Claude Code hooks の合成をスキップしました(手動: jq -s '.[0] * .[1]' settings.json $frag)"
+        return 0
+    fi
+    [[ -f "$settings" ]] || echo '{}' > "$settings"
+    if [[ "$(jq -r '.hooks.Stop // empty | tostring' "$settings")" == *tmux-claude-status* ]]; then
+        return 0
+    fi
+    jq -s '.[0] * .[1]' "$settings" "$frag" > "$settings.tmp" && mv "$settings.tmp" "$settings"
+    echo "~/.claude/settings.json に tmux 用 hooks を追加しました"
 }
 
 # マシン固有の git ユーザー情報(~/.gitconfig から include される)

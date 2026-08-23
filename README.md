@@ -71,11 +71,22 @@ MAS=1 ./setup.sh install   # Mac App Store アプリも含める(要サインイ
   - `-l 2`(既定): 左 claude、右シェル
   - `-l 4`: 2x2(左上 claude、他 3 つはシェル)
   - どちらも別ウィンドウ `shell` を作る
+- `tmux-claude -c` は `claude --continue` で前回の会話を再開、`-- <引数>` は claude にそのまま渡す(`-- -w feature-x` で worktree、`-- --resume 名前`)。`-L` で一覧、`-k [dir]` で終了。
 - `prefix + /` でチートシート、`prefix + ?` で全キー一覧。
+- 状態の可視化
+  - Claude Code の hooks が `~/.claude/hooks/tmux-claude-status` を呼び、ウィンドウ名に 🤖 作業中 / 💬 入力待ち / ✅ 完了 を付ける。ペインが 2 つ以上のときはペイン枠にも番号・実行中コマンド・状態を出す。
+  - hooks の配線(`hooks/tmux-claude-status.hooks.json`)は `setup.sh install dotfiles` が `~/.claude/settings.json` に合成する(jq が必要)。`preferredNotifChannel: terminal_bell` も同時に入り、ベルが鳴ったウィンドウは tmux が強調する。
 - Claude Code 側の設定
   - `~/.claude/keybindings.json`(stow で展開): `Ctrl+S`(stash)を無効化し tmux の prefix と衝突しないようにする。Claude Code に `Ctrl+S` を送るときは prefix を 2 回押す。
-  - `~/.claude/settings.json` に `"teammateMode": "tmux"` を入れると agent team の teammate が tmux ペインに分かれる(settings.json は機密や環境依存値を含むため repo 管理外)。
+  - `~/.claude/settings.json` に `"teammateMode": "tmux"` を入れると agent team の teammate が tmux ペインに分かれる(settings.json は機密や環境依存値を含むため repo 管理外)。teammate は現在のウィンドウを分割するので、team を使うときは 2 ペインレイアウトが収まりがよい。
   - Shift+Enter 改行は tmux.conf の `extended-keys` / `allow-passthrough` 設定で通る。
+- Windows Terminal から常に tmux の中で始めるには、Ubuntu プロファイルの「コマンド ライン」を次にする(開いた時点で `main` セッションに接続、以後 `tmux-claude` はその中から切り替わる):
+
+  ```
+  wsl.exe -d Ubuntu --cd ~ tmux new -A -s main
+  ```
+
+  WSL2 では `stow` 実行時に `BUG in find_stowed_path? Absolute/relative mismatch ...` と出ることがあるが、`$HOME` 直下にある無関係な絶対パス symlink に対する stow 2.3.1 の警告で、展開結果には影響しない。
 
 ## templates
 

@@ -32,7 +32,7 @@ confirm_install() {
         esac
     fi
     if [[ "$1" != packages ]]; then
-        echo "  - stow(無ければ導入)で home/ を \$HOME に展開。衝突する既存ファイルは *.backup.<時刻> に退避"
+        echo "  - stow(無ければ導入)で home/ を \$HOME に展開。衝突する既存ファイル・symlink は *.backup.<時刻> に退避"
         echo "  - ~/.gitconfig.local が無ければ作成、Claude Code の共有設定(hooks, statusLine)を ~/.claude/settings.json に合成(jq)"
         echo "  - fish があれば fisher とプラグインを導入$([[ "$OS" == Darwin ]] && echo '、既定シェルを fish に変更')"
     fi
@@ -52,6 +52,7 @@ ensure_homebrew() {
 mas_enabled() { [[ "${MAS:-}" == 1 ]] && command -v mas >/dev/null; }
 
 apt_packages() { grep -v '^#' apt-packages.txt | xargs; }
+apt_install()  { sudo apt-get update && sudo apt-get install -y "$@"; }
 
 install_packages() {
     case "$OS" in
@@ -66,7 +67,7 @@ install_packages() {
             ;;
         Linux)
             # shellcheck disable=SC2046
-            sudo apt-get install -y $(apt_packages)
+            apt_install $(apt_packages)
             ;;
     esac
 }
@@ -104,27 +105,25 @@ ensure_stow() {
     echo "GNU stow を導入します..."
     case "$OS" in
         Darwin) ensure_homebrew; brew install stow ;;
-        Linux)  sudo apt-get install -y stow ;;
+        Linux)  apt_install stow ;;
     esac
 }
 
 install_dotfiles() {
     ensure_stow
-    # 親ディレクトリは実体で用意し、~/.config 等がまるごと repo への symlink に畳まれるのを防ぐ
-    mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.claude"
-
-    # 衝突する実体ファイルは退避してから展開する。
-    # 既に repo を指しているもの(親ディレクトリごと symlink の場合を含む)は対象外
+    # 衝突する既存ファイル(repo 以外を指す symlink、切れた symlink を含む)は退避してから展開する
     local ts rel target
     ts="$(date +%Y%m%d_%H%M%S)"
     while IFS= read -r rel; do
         target="$HOME/$rel"
-        if [[ -e "$target" && ! -L "$target" && ! "$target" -ef "home/$rel" ]]; then
+        if [[ ( -e "$target" || -L "$target" ) && ! "$target" -ef "home/$rel" ]]; then
             mv "$target" "$target.backup.$ts"
             echo "退避: $rel -> $rel.backup.$ts"
         fi
     done < <(cd home && find . -type f | sed 's|^\./||')
-    stow --restow --target="$HOME" home
+    # --no-folding: ディレクトリは実体で作り、ファイルだけ symlink にする
+    # (~/.config/fish が repo への symlink に畳まれると fisher 等が repo 内に書き込むため)
+    stow --no-folding --restow --target="$HOME" home
     echo "dotfiles を $HOME に展開しました"
 
     # ~/.tmux.conf が残っていると ~/.config/tmux/tmux.conf が読まれない
@@ -150,7 +149,7 @@ ensure_claude_settings() {
     [[ -f "$settings" ]] || echo '{}' > "$settings"
     merged="$(jq -s '.[0] * .[1]' "$settings" "$shared")"
     [[ "$merged" == "$(jq . "$settings")" ]] && return 0
-    printf '%s\n' "$merged" > "$settings"
+    printf '%s\n' "$merged" > "$settings.tmp" && mv "$settings.tmp" "$settings"
     echo "~/.claude/settings.json に settings.shared.json を合成しました"
 }
 
@@ -190,7 +189,7 @@ diff_dotfiles() {
         echo "stow が未導入です(install 時に自動導入されます)"; return 0
     fi
     echo "## dotfiles 展開予定(stow dry-run)"
-    stow --no --verbose=2 --restow --target="$HOME" home 2>&1 | sed 's/^/  /'
+    stow --no --verbose=2 --no-folding --restow --target="$HOME" home 2>&1 | sed 's/^/  /'
 }
 
 status_dotfiles() {
@@ -199,7 +198,7 @@ status_dotfiles() {
     while IFS= read -r rel; do
         target="$HOME/$rel"
         total=$((total + 1))
-        if [[ -e "$target" && "$target" -ef "home/$rel" ]]; then   # 親ディレクトリごと symlink された場合も同一実体なら OK
+        if [[ -e "$target" && "$target" -ef "home/$rel" ]]; then
             echo "  OK   $rel"; ok=$((ok + 1))
         elif [[ -e "$target" || -L "$target" ]]; then
             echo "  WARN $rel (存在するが repo を指していない)"

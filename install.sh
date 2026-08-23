@@ -21,7 +21,7 @@ case "$(uname -s)" in
         if ! command -v git >/dev/null; then
             read -rp "git がありません。apt で導入しますか? [y/N] " ans
             [[ "$ans" =~ ^[Yy]$ ]] || { echo "中止しました"; exit 1; }
-            sudo apt-get install -y git
+            sudo apt-get update && sudo apt-get install -y git
         fi
         ;;
 esac

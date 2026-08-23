@@ -1,0 +1,17 @@
+#!/bin/sh
+# 標準入力をクリップボードへ(macOS / WSL2 / Linux 共通)
+if command -v pbcopy >/dev/null 2>&1; then
+    exec pbcopy
+elif command -v clip.exe >/dev/null 2>&1; then
+    # WSL2: clip.exe は UTF-16LE で渡さないと日本語が化ける(BOM を付けると先頭に U+FEFF が混入する)
+    iconv -f UTF-8 -t UTF-16LE | clip.exe
+elif command -v wl-copy >/dev/null 2>&1; then
+    exec wl-copy
+elif command -v xclip >/dev/null 2>&1; then
+    exec xclip -in -selection clipboard
+elif command -v xsel >/dev/null 2>&1; then
+    exec xsel --clipboard --input
+else
+    echo "clipcopy: クリップボードツールが見つかりません" >&2
+    exit 1
+fi

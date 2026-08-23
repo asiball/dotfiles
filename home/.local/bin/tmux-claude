@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Claude Code 用の tmux ワークスペースを起動する(既にあれば再接続)
+#
+#   tmux-claude [dir]     dir 省略時はカレントディレクトリ。セッション名はディレクトリ名
+#
+# レイアウト
+#   window "claude": 左に claude(65%)、右にシェル
+#   window "shell" : 作業用シェル
+set -eu
+
+dir="$(cd "${1:-.}" && pwd)"
+name="$(basename "$dir" | sed 's/[^A-Za-z0-9_-]/_/g')"   # セッション名に使えない . : を置換
+
+if ! tmux has-session -t "=$name" 2>/dev/null; then
+    tmux new-session -d -s "$name" -c "$dir" -n claude
+    tmux split-window -h -l 35% -t "$name:claude" -c "$dir"
+    tmux new-window -d -t "$name" -n shell -c "$dir"
+    tmux send-keys -t "$name:claude.1" 'claude' C-m
+    tmux select-pane -t "$name:claude.1"
+fi
+
+if [ -n "${TMUX:-}" ]; then
+    tmux switch-client -t "=$name"
+else
+    tmux attach-session -t "=$name"
+fi

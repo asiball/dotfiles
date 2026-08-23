@@ -8,7 +8,7 @@ img="$(docker build -q "$ROOT/test")"
 docker run --rm -v "$ROOT:/src:ro" "$img" bash -c '
     set -eu
     echo "### 1 回目(クリーン環境)"
-    printf "y\nTest User\ntest@example.com\n" | REPO=/src bash /src/install.sh
+    printf "y\ny\nTest User\ntest@example.com\n" | REPO=/src bash /src/install.sh   # git 導入の確認 / setup の確認 / git user.name / user.email
     n1=$(find ~ -name "*.backup.*" | wc -l)
     echo; echo "### 2 回目(更新 + 再展開)"
     printf "y\n" | bash ~/dotfiles/install.sh

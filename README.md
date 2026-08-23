@@ -48,5 +48,5 @@ test/run.sh   # Docker のクリーンな Ubuntu で install.sh を 2 回流し�
 - `tmux-claude [dir]` で Claude Code 用のワークスペースを起動(再実行で再接続)。オプションは `tmux-claude -h`。
 - Claude Code の hooks がウィンドウ名に状態(作業中 / 入力待ち / 完了)を付ける。
 - `home/.claude/` で管理するもの: `keybindings.json`(`Ctrl+S` を無効化。Claude Code に送るときは prefix を 2 回押す)、`statusline.sh`、`hooks/`。
-- `~/.claude/settings.json` は環境依存値を含むため repo 管理外。共有したい項目(hooks、statusLine)は `settings.shared.json` に置き、`setup.sh install` が jq で合成する。agent team を tmux ペインに分ける `"teammateMode": "tmux"` は settings.json に直接入れる。
+- `~/.claude/settings.json` は環境依存値を含むため repo 管理外。共有したい項目(hooks、statusLine)は `settings.shared.json` に置き、`setup.sh install` が jq で合成する(同名キーは配列ごと shared 側で置換、shared から消したキーは settings.json に残る)。agent team を tmux ペインに分ける `"teammateMode": "tmux"` は settings.json に直接入れる。
 - Windows Terminal から常に tmux で始めるには、Ubuntu プロファイルのコマンドラインを `wsl.exe -d Ubuntu --cd ~ tmux new -A -s main` にする。

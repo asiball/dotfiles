@@ -4,8 +4,7 @@
 ## HISTORY {{{
 ##--------------
 HISTFILE=~/.zsh_history
-HISTSIZE=1000
-SAVEHIST=2000
+SAVEHIST=10000    # HISTSIZE は .bashrc と共通
 setopt share_history
 setopt hist_ignore_dups
 setopt auto_pushd
@@ -52,16 +51,14 @@ alias h='history'
 alias pip='pip3'
 alias zshrc='vim ~/.zshrc'
 
-alias ls='ls -Gp'
-alias ll='ls -alGp'
-alias la='ls -Ap'
+alias ll='ls -al'    # ls の色付けは .bashrc(--color=auto / CLICOLOR)に任せる
+alias la='ls -A'
 
 alias cdd='cd $HOME'
 
 alias tree='tree -NC'
 
 alias du='du -sh *'
-alias tm='terminal'
 alias rm='rm -i'
 alias pwdc="pwd | tr -d '\n' | clipcopy"
 

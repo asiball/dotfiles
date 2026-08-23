@@ -34,6 +34,7 @@ if [ -n "$BASH_VERSION" ] && ! shopt -oq posix; then
     done
 fi
 
+[ -x /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"   # macOS(Apple Silicon)
 export PATH="$HOME/.local/bin:$PATH"
 
 [ -f ~/.bash_aliases ] && . ~/.bash_aliases

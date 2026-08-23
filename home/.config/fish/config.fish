@@ -103,7 +103,7 @@ end
 
 # Added by OrbStack: command-line tools and integration
 # This won't be added again if you remove it.
-if command -q orbstack
+if test -d ~/.orbstack
     fish_add_path ~/.orbstack/bin
     source ~/.orbstack/shell/init2.fish 2>/dev/null || :
 end

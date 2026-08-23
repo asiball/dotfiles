@@ -62,7 +62,9 @@ if ! tmux has-session -t "=$name" 2>/dev/null; then
         tmux split-window -h -l 35% -t "$name:claude" -c "$dir"
     fi
     tmux new-window -d -t "$name" -n shell -c "$dir"
-    tmux send-keys -t "$name:claude.1" "claude${claude_args[*]:+ ${claude_args[*]}}" C-m
+    cmd=claude
+    [ ${#claude_args[@]} -gt 0 ] && cmd+=" $(printf '%q ' "${claude_args[@]}")"   # スペース等を含む引数もそのまま渡す
+    tmux send-keys -t "$name:claude.1" "$cmd" C-m
     tmux select-pane -t "$name:claude.1"
 fi
 

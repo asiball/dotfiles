@@ -1,0 +1,7 @@
+# Linux(Ubuntu/WSL2) で apt で入れるもの。setup.sh install packages が使う
+stow
+tmux
+git
+vim
+fish
+peco

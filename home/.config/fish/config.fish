@@ -64,8 +64,8 @@ set __fish_git_prompt_char_upstream_behind '-'
 alias l='ls -l'
 alias h='history'
 alias python='python3'
-alias pwdc "pwd | tr -d '\n' | pbcopy"
-alias o='open'
+alias pwdc "pwd | tr -d '\n' | clipcopy"
+command -q open; and alias o='open'
 alias tree='tree -NC'
 alias cronlist='crontab -l'
 alias croncron='crontab ~/.cron.conf; echo -- cron reload! -- ; cronlist'
@@ -91,8 +91,11 @@ end
 
 
 
-# add ssh keys on 1password
-set -x SSH_AUTH_SOCK ~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+# 1Password SSH agent (macOS)
+set -l op_sock ~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+if test -S $op_sock
+    set -x SSH_AUTH_SOCK $op_sock
+end
 
 if command -q uv
     uv generate-shell-completion fish | source
@@ -104,3 +107,5 @@ if command -q orbstack
     fish_add_path ~/.orbstack/bin
     source ~/.orbstack/shell/init2.fish 2>/dev/null || :
 end
+
+# マシン固有の設定は ~/.config/fish/conf.d/local.fish に置く(conf.d は自動で読み込まれる)

@@ -95,12 +95,13 @@ install_dotfiles() {
     # 親ディレクトリは実体で用意し、~/.config 等がまるごと repo への symlink に畳まれるのを防ぐ
     mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.claude"
 
-    # 衝突する実体ファイル(symlink でないもの)は退避してから展開する
+    # 衝突する実体ファイルは退避してから展開する。
+    # 既に repo を指しているもの(親ディレクトリごと symlink の場合を含む)は対象外
     local ts rel target
     ts="$(date +%Y%m%d_%H%M%S)"
     while IFS= read -r rel; do
         target="$HOME/$rel"
-        if [[ -e "$target" && ! -L "$target" ]]; then
+        if [[ -e "$target" && ! -L "$target" && ! "$target" -ef "home/$rel" ]]; then
             mv "$target" "$target.backup.$ts"
             echo "退避: $rel -> $rel.backup.$ts"
         fi

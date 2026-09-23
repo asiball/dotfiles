@@ -37,6 +37,16 @@ backup() {
     echo "  退避: $1 -> $1.backup.$TS"
 }
 
+# stow と衝突するパスを片付ける。リンク切れの symlink(レイアウト変更前の repo を指していたもの等)は中身が無いので削除、それ以外は退避
+clear_path() {
+    if [[ -L "$1" && ! -e "$1" ]]; then
+        echo "  リンク切れを削除: $1 (-> $(readlink "$1"))"
+        rm "$1"
+    else
+        backup "$1"
+    fi
+}
+
 # 引数(target...)を WITH_PACKAGES(0/1)と PKGS(stow パッケージ名の配列)に展開する
 resolve_targets() {
     local t
@@ -169,19 +179,21 @@ ensure_stow() {
 }
 
 install_dotfiles() {
-    local pkg rel target
+    local pkg rel target dir
     ensure_stow
     echo "## dotfiles を展開: ${PKGS[*]}"
-    # 衝突する既存ファイル(repo 以外を指す symlink を含む)は退避してから展開する。
-    # リンク切れの symlink(レイアウト変更前の repo を指していたもの等)は中身が無いので削除する
+    # 衝突する既存ファイル(repo 以外を指す symlink を含む)を片付けてから展開する。
+    # 親ディレクトリが symlink(~/.config/fish をディレクトリごと張っていた等)の場合も stow は衝突するので対象にする
     for pkg in "${PKGS[@]}"; do
         while IFS= read -r rel; do
+            dir="$(dirname "$rel")"
+            while [[ "$dir" != . ]]; do
+                if [[ -L "$HOME/$dir" ]]; then clear_path "$HOME/$dir"; fi
+                dir="$(dirname "$dir")"
+            done
             target="$HOME/$rel"
-            if [[ -L "$target" && ! -e "$target" ]]; then
-                echo "  リンク切れを削除: $target (-> $(readlink "$target"))"
-                rm "$target"
-            elif [[ -e "$target" && ! "$target" -ef "home/$pkg/$rel" ]]; then
-                backup "$target"
+            if [[ -e "$target" || -L "$target" ]] && [[ ! "$target" -ef "home/$pkg/$rel" ]]; then
+                clear_path "$target"
             fi
         done < <(pkg_files "$pkg")
     done

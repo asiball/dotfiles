@@ -1,0 +1,64 @@
+// VSCode の共通設定(エディタ基本のみ)。setup.sh は使わず、手でコピーする。
+// 私物 PC は Settings Sync で同期し、これは Settings Sync を使えない仕事用 PC 向けの読み取り専用の写し。
+// 使い方: コマンドパレット「Preferences: Open User Settings (JSON)」を開き、必要な項目を貼り付ける。
+// 言語別フォーマッタは拡張機能が必要(ms-python.black-formatter、esbenp.prettier-vscode、rust-analyzer)。
+{
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "boundary",
+  "editor.fontFamily": "'Source Han Code JP', Consolas, monospace",
+  "editor.fontSize": 12,
+  "editor.insertSpaces": true,
+  "editor.guides.bracketPairs": true,
+  "editor.tokenColorCustomizations": {
+    "comments": "#9d9d9d"
+  },
+  "editor.suggestSelection": "first",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": null,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.jj": true,
+    "**/.DS_Store": true
+  },
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  "diffEditor.experimental.showMoves": true,
+  "diffEditor.hideUnchangedRegions.enabled": true,
+  "diffEditor.codeLens": true,
+  "git.openRepositoryInParentFolders": "never",
+  "git.detectWorktrees": true,
+  "window.commandCenter": false,
+  "window.menuBarVisibility": "compact",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+  "isort.args": ["--profile", "black"],
+  "[rust]": {
+    "editor.formatOnSave": true
+  },
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.checkOnSave": true,
+  "[typescript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 4,
+    "prettier.printWidth": 100,
+    "prettier.tabWidth": 4
+  },
+  "[typescriptreact]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "prettier.printWidth": 100,
+    "editor.rulers": [100],
+    "editor.tabSize": 2,
+    "prettier.tabWidth": 2
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}

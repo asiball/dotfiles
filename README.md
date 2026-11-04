@@ -53,7 +53,7 @@ test/run.sh   # Docker のクリーンな Ubuntu で install.sh を 2 回流し�
 - tmux の prefix は `Ctrl+S`。キー一覧は `prefix + /`(チートシート)。
 - `tmux-claude [dir]` で Claude Code 用のワークスペースを起動(再実行で再接続)。オプションは `tmux-claude -h`。
 - Claude Code の hooks がウィンドウ名に状態(作業中 / 入力待ち / 完了)を付ける。
-- `home/claude/.claude/` で管理するもの: `keybindings.json`(`Ctrl+S` を無効化。Claude Code に送るときは prefix を 2 回押す)、`statusline.mjs`(Node。ディレクトリ・git・model・effort と、コンテキスト・5h/7d・コストの 2 行)、`hooks/`、`settings.shared*.json`、`merge-settings.mjs`。
+- `home/claude/.claude/` で管理するもの: `keybindings.json`(`Ctrl+S` を無効化。Claude Code に送るときは prefix を 2 回押す)、`statusline.mjs`(Node。ディレクトリ・git(+staged ~modified ?untracked !conflict)・オープン PR・model・effort と、コンテキスト・5h/7d・コストの 2 行)、`hooks/`、`settings.shared*.json`、`merge-settings.mjs`。
 - `~/.claude/settings.json` は環境依存値を含むため repo 管理外。共有したい項目(statusLine、model、effort、skillOverrides、plugins など)は `settings.shared.json` に置き、tmux 連携の hooks は `settings.shared.tmux.json` に分ける。`setup.sh install` / `setup.ps1 install` が `merge-settings.mjs`(node)で settings.json に合成する(tmux の分は tmux があるときだけ。同名キーは配列ごと shared 側で置換、shared から消したキーは settings.json に残る。変更する場合は元の settings.json を退避する)。`env` や `permissions`、agent team を tmux ペインに分ける `"teammateMode": "tmux"` のようなマシン固有の項目は settings.json に直接入れる。
 - `enabledPlugins` は有効化の状態だけなので、新しいマシンでは `claude plugin marketplace add asiball/claude-kit` と `claude plugin install <名前>@claude-kit` で本体を入れる。
 - `statusline.mjs` は環境変数 `STATUSLINE_USAGE_FILE` があれば 5h/7d の使用量をそのファイルにも書く(他のツールが読むため。settings.json の `env` で指定する)。

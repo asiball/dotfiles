@@ -1,6 +1,6 @@
 // Claude Code のステータスライン(Node)。settings.shared.json の statusLine から呼ばれる。
 // stdin で受け取るセッションの JSON から 2 行出す:
-//   1 行目: ディレクトリ・git・model・effort・advisor・output style
+//   1 行目: ディレクトリ・git(ブランチ、+staged ~modified ?untracked !conflict、ahead/behind)・PR・model・effort・advisor・output style
 //   2 行目: コンテキスト・5h/7d・コスト
 // 環境変数 STATUSLINE_USAGE_FILE があれば rate_limits をそのファイルにも書く(別のセッションが使用量を読むため)
 import { spawnSync } from 'node:child_process'
@@ -28,7 +28,7 @@ const hhmm = epoch => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-// ブランチ・未コミット数・ahead/behind は stdin に無いので git に聞く
+// ブランチ・変更の内訳・ahead/behind は stdin に無いので git に聞く
 function git(cwd) {
   const r = spawnSync('git', ['-C', cwd, 'status', '--porcelain=v2', '--branch'], { encoding: 'utf8', timeout: 1000 })
   if (r.status !== 0) return undefined
@@ -37,8 +37,15 @@ function git(cwd) {
   const head = header('head')
   const [ahead = 0, behind = 0] = (header('ab') ?? '').match(/\d+/g)?.map(Number) ?? []
   const parts = [fg(141, head === '(detached)' ? header('oid').slice(0, 7) : head)]
-  const changed = lines.filter(l => !l.startsWith('#')).length
-  if (changed) parts.push(fg(221, `●${changed}`))
+  const count = test => lines.filter(test).length
+  const staged = count(l => /^[12] [^.]/.test(l))
+  const modified = count(l => /^[12] .[^.]/.test(l))
+  const untracked = count(l => l.startsWith('? '))
+  const conflicts = count(l => l.startsWith('u '))
+  if (staged) parts.push(fg(114, `+${staged}`))
+  if (modified) parts.push(fg(221, `~${modified}`))
+  if (untracked) parts.push(dim(`?${untracked}`))
+  if (conflicts) parts.push(fg(203, `!${conflicts}`))
   if (ahead || behind) parts.push(fg(117, `${ahead ? `↑${ahead}` : ''}${behind ? `↓${behind}` : ''}`))
   return parts.join(' ')
 }
@@ -64,8 +71,12 @@ function advisor(path) {
   return undefined
 }
 
+// オープンな PR があるときだけ。色はレビュー状態
+const PR_COLOR = { approved: 114, changes_requested: 203, pending: 221 }
+const pr = s.pr?.number ? fg(PR_COLOR[s.pr.review_state] ?? 245, `#${s.pr.number}`) : undefined
+
 const cwd = s.workspace?.current_dir ?? s.cwd ?? process.cwd()
-const first = [[color(1, basename(cwd)), git(cwd)].filter(Boolean).join('  ')]
+const first = [[color(1, basename(cwd)), git(cwd), pr].filter(Boolean).join('  ')]
 first.push([s.model?.display_name, s.effort?.level, advisor(s.transcript_path)].filter(Boolean).join(dim(' · ')))
 if (s.output_style?.name && s.output_style.name !== 'default') first.push(s.output_style.name)
 

@@ -10,9 +10,10 @@ import { basename } from 'node:path'
 const s = JSON.parse(readFileSync(0, 'utf8').trim() || '{}')
 
 const color = (code, text) => `\x1b[${code}m${text}\x1b[0m`
-const dim = text => color(2, text)
 // 256 色で指定し、テーマの紫や黄が暗くても暗い背景で読めるようにする
 const fg = (n, text) => color(`38;5;${n}`, text)
+// 区切り線や補助の表示。faint(SGR 2)は暗い背景でほぼ見えない端末があるので灰色を直接指定する
+const dim = text => fg(245, text)
 const SEP = dim(' │ ')
 
 // 天気はトークンウェザーと同じ閾値

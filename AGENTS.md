@@ -1,6 +1,6 @@
 # AGENTS.md — このリポジトリ(dotfiles)の制約
 
-macOS / Linux(Ubuntu, WSL2)共通の dotfiles リポジトリ。**シンプルさを最優先**で維持する。
+macOS / Linux(Ubuntu, WSL2)共通の dotfiles リポジトリ。Windows は Claude Code の設定(`home/claude/`)だけを `setup.ps1` で展開する。**シンプルさを最優先**で維持する。
 全プロジェクト共通の方針は `~/.claude/CLAUDE.md` 側にあり、ここには本リポジトリ固有の制約だけを書く。
 
 ## 役割: HUB(再発明しない)
@@ -32,7 +32,7 @@ macOS / Linux(Ubuntu, WSL2)共通の dotfiles リポジトリ。**シンプル�
 ## 環境の前提
 
 - クリーンな macOS、または Ubuntu / WSL2 から `./setup.sh install all`(または `install.sh` 経由)だけで動くことを壊さない。
-- 外部ツールを増やすのは、一般的・身元が明確・スコープが限定的なものに限る(例: stow、jq)。
+- 外部ツールを増やすのは、一般的・身元が明確・スコープが限定的なものに限る(例: stow、jq、node)。
 - 破壊的な既定動作を作らない(引数なし実行はヘルプ)。`install` は導入・変更内容を表示して確認を取り、既存ファイルを退避してから変更する。退避は `setup.sh` の `backup` を通し、最後に一覧表示されるようにする。
 - `setup.sh` は対話入力(`read`)を含むため、`install.sh` の案内は `bash -c "$(curl …)"` 形式にし、`curl | bash` にしない。
 - Mac App Store(mas)は既定でスキップ。`MAS=1` のときだけ `Brewfile.mas` を対象に含める。
@@ -49,5 +49,5 @@ macOS / Linux(Ubuntu, WSL2)共通の dotfiles リポジトリ。**シンプル�
 
 ## スコープ
 
-- 管理対象は `home/<名前>/`(stow)、`vscode/`(仕事用 PC に手でコピーする VSCode 設定。自動展開しない)、`Brewfile*`、`apt-packages.txt`、`setup.sh`、`install.sh`。`test/` は Docker でクリーンな Ubuntu の install と 2 回目の冪等性を確認する(`test/run.sh`)。setup.sh / install.sh を変えたら通す。
-- Claude Code 関連は `home/claude/.claude/`(keybindings.json、statusline.sh、hooks/)で管理する。`~/.claude/CLAUDE.md` や skills は内容が固まるまで入れない。`~/.claude/settings.json` は環境依存値や機密を含むため管理せず、共有したい項目は `home/claude/.claude/settings.shared.json` に書いて `setup.sh` が jq で合成する。
+- 管理対象は `home/<名前>/`(stow)、`vscode/`(仕事用 PC に手でコピーする VSCode 設定。自動展開しない)、`Brewfile*`、`apt-packages.txt`、`setup.sh`、`install.sh`、`setup.ps1`(Windows。`home/claude/` のみ)。`test/` は Docker でクリーンな Ubuntu の install と 2 回目の冪等性を確認する(`test/run.sh`)。setup.sh / install.sh を変えたら通す。
+- Claude Code 関連は `home/claude/.claude/`(keybindings.json、statusline.mjs、hooks/、settings.shared*.json、merge-settings.mjs)で管理する。`~/.claude/CLAUDE.md` や skills は内容が固まるまで入れない。`~/.claude/settings.json` は環境依存値や機密を含むため管理せず、共有したい項目は `settings.shared.json`(tmux 連携の hooks は `settings.shared.tmux.json`)に書いて `merge-settings.mjs` で合成する。合成は「ファイルを読んで結果を標準出力に出す」だけにし、退避と書き込みは `setup.sh` / `setup.ps1` 側で行う。公開リポジトリなので、shared にローカルパス・`env`・`autoMode` を入れない。

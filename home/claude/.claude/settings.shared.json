@@ -1,55 +1,68 @@
 {
   "preferredNotifChannel": "terminal_bell",
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/tmux-claude-status working",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "permission_prompt|idle_prompt",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/tmux-claude-status waiting",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/tmux-claude-status done",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/tmux-claude-status clear",
-            "timeout": 5
-          }
-        ]
-      }
-    ]
-  },
   "statusLine": {
     "type": "command",
-    "command": "~/.claude/statusline.sh",
+    "command": "node ~/.claude/statusline.mjs",
     "padding": 2
-  }
+  },
+  "model": "fable",
+  "effortLevel": "high",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "medium",
+      "autoCompactWindow": 400000
+    },
+    "claude-fable-5-1": {
+      "autoCompactWindow": 400000
+    }
+  },
+  "advisorModel": "fable",
+  "skillOverrides": {
+    "anthropic-skills:docs": "off",
+    "anthropic-skills:docx": "off",
+    "anthropic-skills:pptx": "off",
+    "anthropic-skills:xlsx": "off",
+    "anthropic-skills:pdf": "off",
+    "anthropic-skills:computer-use": "off",
+    "anthropic-skills:built-in-browser": "off",
+    "anthropic-skills:deep-research": "off",
+    "anthropic-skills:morning": "off",
+    "anthropic-skills:import-memory": "off",
+    "anthropic-skills:ja-proofread": "off",
+    "anthropic-skills:skill-creator": "off"
+  },
+  "extraKnownMarketplaces": {
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    },
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
+      }
+    },
+    "claude-kit": {
+      "source": {
+        "source": "github",
+        "repo": "asiball/claude-kit"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "example-skills@anthropic-agent-skills": true,
+    "codex@openai-codex": true,
+    "cc-plugin-you-should-know@builtin": true,
+    "ship-check@claude-kit": true,
+    "playful@claude-kit": true,
+    "obi@claude-kit": true
+  },
+  "feedbackDrafts": "off",
+  "autoUpdatesChannel": "latest",
+  "tui": "fullscreen",
+  "theme": "dark",
+  "agentPushNotifEnabled": true,
+  "skipWorkflowUsageWarning": true
 }

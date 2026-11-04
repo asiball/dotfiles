@@ -155,7 +155,7 @@ pkg_files()     { (cd "home/$1" && find . -type f | sed 's|^\./||' | sort); }
 extra_desc() {
     case "$1" in
         git)    echo "~/.gitconfig.local が無ければ作成(user.name / user.email を入力)" ;;
-        claude) echo "settings.shared.json(hooks, statusLine)を ~/.claude/settings.json に合成(jq。変更時は退避)" ;;
+        claude) echo "settings.shared.json(statusLine、model、plugins など)を ~/.claude/settings.json に合成(node。tmux があれば settings.shared.tmux.json の hooks も。変更時は退避)" ;;
         fish)   echo "fisher とプラグインをインストール$([[ "$OS" == Darwin ]] && echo '、既定シェルを fish に変更')" ;;
         tmux)   echo "~/.tmux.conf があれば退避(~/.config/tmux/tmux.conf を使うため)" ;;
     esac
@@ -181,6 +181,7 @@ ensure_stow() {
 install_dotfiles() {
     local pkg rel target dir
     ensure_stow
+    for pkg in "${PKGS[@]}"; do [[ "$pkg" == claude ]] && ensure_node; done
     echo "## dotfiles を展開: ${PKGS[*]}"
     # 衝突する既存ファイル(repo 以外を指す symlink を含む)を片付けてから展開する。
     # 親ディレクトリが symlink(~/.config/fish をディレクトリごと張っていた等)の場合も stow は衝突するので対象にする
@@ -210,23 +211,27 @@ retire_tmux_conf() {
     if [[ -e "$HOME/.tmux.conf" || -L "$HOME/.tmux.conf" ]]; then backup "$HOME/.tmux.conf"; fi
 }
 
-# home/claude/.claude/settings.shared.json(hooks, statusLine など)を ~/.claude/settings.json に合成する。
-# settings.json 自体は環境依存値や機密を含むため repo 管理外。shared 側の項目で上書きし(同名キーは配列ごと置換)、それ以外は保持する
+# claude パッケージは statusline.mjs と設定の合成に node を使う(packages の対象なので install all なら先に入る)
+ensure_node() {
+    command -v node >/dev/null && return 0
+    echo "node が無いため claude は展開できません(statusline.mjs と settings の合成に必要)。先に $0 install packages を実行してください"
+    exit 1
+}
+
+# home/claude/.claude/settings.shared.json(statusLine、model、plugins など)を ~/.claude/settings.json に合成する。
+# settings.json 自体は環境依存値や機密を含むため repo 管理外。shared 側の項目で上書きし(同名キーは配列ごと置換)、それ以外は保持する。
+# tmux 連携の hooks は settings.shared.tmux.json に分けてあり、tmux があるときだけ合成する
 ensure_claude_settings() {
-    local settings="$HOME/.claude/settings.json" shared="$HOME/.claude/settings.shared.json" merged
-    if ! command -v jq >/dev/null; then
-        echo "jq が無いため Claude Code 設定の合成をスキップしました(手動: jq -s '.[0] * .[1]' settings.json $shared)"
-        return 0
-    fi
+    local dir="$HOME/.claude" settings="$HOME/.claude/settings.json" shared merged
+    shared=("$dir/settings.shared.json")
+    if command -v tmux >/dev/null; then shared+=("$dir/settings.shared.tmux.json"); fi
+    merged="$(node "$dir/merge-settings.mjs" "$settings" "${shared[@]}")"
     if [[ -f "$settings" ]]; then
-        merged="$(jq -s '.[0] * .[1]' "$settings" "$shared")"
-        [[ "$merged" == "$(jq . "$settings")" ]] && return 0
+        [[ "$merged" == "$(node "$dir/merge-settings.mjs" "$settings")" ]] && return 0
         backup "$settings"
-    else
-        merged="$(jq . "$shared")"
     fi
     printf '%s\n' "$merged" > "$settings"
-    echo "  ~/.claude/settings.json に settings.shared.json を合成しました"
+    echo "  ~/.claude/settings.json に ${shared[*]##*/} を合成しました"
 }
 
 # マシン固有の git ユーザー情報(~/.gitconfig から include される)
